@@ -21,6 +21,46 @@ const headphoneTarget = document.querySelector('#headphoneTarget');
 const headphoneSoftware = document.querySelector('#headphoneSoftware');
 const crossfeed = document.querySelector('#crossfeed');
 const stageWidth = document.querySelector('#stageWidth');
+const profileFile = document.querySelector('#profileFile');
+const profileList = document.querySelector('#profileList');
+const profileStatus = document.querySelector('#profileStatus');
+const profileStorageKey = 'geteqd-imported-profiles-v1';
+const targetFrequencies = [32,64,250,2500,6400,12000];
+
+function safeProfiles(){
+  try { return JSON.parse(localStorage.getItem(profileStorageKey) || '[]'); }
+  catch { return []; }
+}
+function formatDate(value){
+  if(!value) return 'Date not supplied';
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'});
+}
+function validateProfile(candidate){
+  if(!candidate || candidate.schema !== 'getEQd-profile/v1') throw new Error('Schema must be getEQd-profile/v1.');
+  if(typeof candidate.model !== 'string' || !candidate.model.trim()) throw new Error('Add a model name.');
+  if(!Array.isArray(candidate.frequenciesHz) || !Array.isArray(candidate.gainDb) || candidate.frequenciesHz.length !== candidate.gainDb.length || candidate.frequenciesHz.length < 2) throw new Error('Frequencies and gainDb must be matching arrays with at least two points.');
+  if(candidate.frequenciesHz.some((value,i)=>!Number.isFinite(value) || value <= 0 || !Number.isFinite(candidate.gainDb[i]))) throw new Error('Frequency and gain values must be finite numbers.');
+  return {schema:'getEQd-profile/v1',model:candidate.model.trim(),source:typeof candidate.source === 'string' && candidate.source.trim() ? candidate.source.trim() : 'Local import',measuredAt:candidate.measuredAt || '',notes:typeof candidate.notes === 'string' ? candidate.notes.trim() : '',frequenciesHz:candidate.frequenciesHz.map(Number),gainDb:candidate.gainDb.map(Number)};
+}
+function interpolate(profile, frequency){
+  const points = profile.frequenciesHz.map((hz,i)=>({hz,gain:profile.gainDb[i]})).sort((a,b)=>a.hz-b.hz);
+  if(frequency <= points[0].hz) return points[0].gain;
+  if(frequency >= points[points.length-1].hz) return points[points.length-1].gain;
+  const upper = points.findIndex(point=>point.hz >= frequency); const low = points[upper-1]; const high = points[upper];
+  const ratio = (Math.log(frequency)-Math.log(low.hz))/(Math.log(high.hz)-Math.log(low.hz));
+  return low.gain + (high.gain-low.gain)*ratio;
+}
+function applyProfile(profile){
+  targetFrequencies.forEach((frequency,index)=>{bands[index].value=Math.max(-12,Math.min(11,Math.round(interpolate(profile,frequency)*2)/2));});
+  document.querySelectorAll('.preset').forEach(button=>button.classList.remove('active')); renderBands(); sync(); document.querySelector('#console').scrollIntoView({behavior:'smooth',block:'start'});
+  profileStatus.textContent = `${profile.model} applied to the six-band preview. Original measurement remains unchanged.`;
+}
+function renderProfiles(){
+  const profiles=safeProfiles();
+  profileList.innerHTML = profiles.length ? profiles.map((profile,index)=>`<article class="profile-card"><div class="profile-card-top"><span class="version-chip">LOCAL · MEASURED</span><span class="profile-count">${profile.frequenciesHz.length} points</span></div><h3>${profile.model}</h3><p>${profile.source} · ${formatDate(profile.measuredAt)}</p>${profile.notes?`<p class="profile-notes">${profile.notes}</p>`:''}<button class="profile-apply" type="button" data-profile-index="${index}">Audition in console <span>→</span></button></article>`).join('') : '<div class="profile-empty"><strong>Your measured profiles will live here.</strong><p>Import a JSON measurement to create the first local profile. No account or upload is involved.</p></div>';
+  profileList.querySelectorAll('[data-profile-index]').forEach(button=>button.addEventListener('click',()=>applyProfile(profiles[+button.dataset.profileIndex])));
+}
 
 function renderBands(){
   grid.innerHTML = bands.map((b,i)=>`<article class="band-card"><div class="band-top"><span class="band-index">0${i+1}</span><span class="band-index">${b.value > 0 ? '+' : ''}${b.value.toFixed(1)}</span></div><div class="band-name">${b.name}</div><div class="band-role">${b.role}</div><div class="band-value" id="bandValue${i}">${b.value > 0 ? '+' : ''}${b.value.toFixed(1)} dB</div><div class="band-hz">${b.hz}</div><input data-band="${i}" type="range" min="-12" max="11" step="0.5" value="${b.value}" aria-label="${b.name} gain"></article>`).join('');
@@ -48,4 +88,16 @@ document.querySelectorAll('.preset').forEach(button=>button.addEventListener('cl
 preamp.addEventListener('input',sync); limiter.addEventListener('input',sync);
 outputMode.addEventListener('change',syncHeadphones); headphoneTarget.addEventListener('change',syncHeadphones); headphoneSoftware.addEventListener('change',syncHeadphones); crossfeed.addEventListener('input',syncHeadphones); stageWidth.addEventListener('input',syncHeadphones);
 document.querySelector('#bypass').addEventListener('click',e=>{const on=e.currentTarget.classList.toggle('on');e.currentTarget.setAttribute('aria-pressed',on);e.currentTarget.innerHTML=`<span class="toggle-dot"></span> ${on?'Processing bypassed':'Bypass'}`; document.querySelector('#console').classList.toggle('bypassed',on);});
+document.querySelector('#importProfile').addEventListener('click',()=>profileFile.click());
+profileFile.addEventListener('change',async event=>{
+  const file=event.target.files[0]; if(!file) return;
+  try { const profile=validateProfile(JSON.parse(await file.text())); const profiles=safeProfiles().filter(item=>item.model.toLowerCase()!==profile.model.toLowerCase()); profiles.unshift(profile); localStorage.setItem(profileStorageKey,JSON.stringify(profiles)); renderProfiles(); profileStatus.textContent=`Imported ${profile.model}. The source file stays on your device.`; }
+  catch(error) { profileStatus.textContent=`Import not accepted: ${error.message}`; }
+  event.target.value='';
+});
+document.querySelector('#downloadTemplate').addEventListener('click',()=>{
+  const template={schema:'getEQd-profile/v1',model:'Your headphone or speaker model',source:'Measurement source or rig',measuredAt:'2026-09-10',notes:'Add how this measurement was made.',frequenciesHz:[20,32,64,125,250,500,1000,2000,4000,8000,12000,16000,20000],gainDb:[0,0,0,0,0,0,0,0,0,0,0,0,0]};
+  const link=document.createElement('a'); link.href=URL.createObjectURL(new Blob([JSON.stringify(template,null,2)],{type:'application/json'})); link.download='getEQd-profile-template.json'; link.click(); URL.revokeObjectURL(link.href);
+});
 renderBands(); sync(); syncHeadphones();
+renderProfiles();

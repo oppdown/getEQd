@@ -1,0 +1,9 @@
+{
+  "schema": "getEQd-profile/v1",
+  "model": "Your headphone or speaker model",
+  "source": "Measurement source or rig",
+  "measuredAt": "2026-09-10",
+  "notes": "Add how this measurement was made.",
+  "frequenciesHz": [20, 32, 64, 125, 250, 500, 1000, 2000, 4000, 8000, 12000, 16000, 20000],
+  "gainDb": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+}

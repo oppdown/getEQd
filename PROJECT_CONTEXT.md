@@ -14,6 +14,7 @@ getEQd is a Windows-first EQ for surround speakers and headphones. The design la
 - Headphone controls: Crossfeed, Stage width, Direct stereo, Windows Spatial Sound, and Game spatial mix.
 - Supporting routes: `/changelog/` and `/download/`.
 - The download page currently provides starter profiles; the Windows installer is not packaged yet.
+- The console now includes a local Profile Lab: validated `getEQd-profile/v1` JSON imports, device-local storage, six-band auditioning, and a downloadable template. It is a calibration-data foundation, not the system-wide audio engine.
 
 ## Next product pass
 
