@@ -95,6 +95,11 @@
           <div class="footer-control"><label for="limiter">Safety ceiling <output id="limiterValue">-1.0 dB</output></label><input id="limiter" type="range" min="-6" max="0" step="0.5" value="-1" aria-label="Safety ceiling"></div>
           <div class="footer-note"><span class="warning-icon">▲</span> 11 dB of headroom on tap. Use your ears.</div>
         </div>
+        <div class="save-profile-bar">
+          <div><div class="console-label">Hot-mod ready</div><strong>Save the way it sounds.</strong><p>Every band, output choice, headphone control, preamp, and safety setting will follow this profile.</p></div>
+          <div class="save-profile-controls"><label class="sr-only" for="profileName">Profile name</label><input id="profileName" type="text" maxlength="48" placeholder="Name this listening profile"><button id="saveProfile" class="button button-primary" type="button">Save profile <span>↓</span></button></div>
+          <p id="saveStatus" class="save-status" role="status">Changes are live in the console until you save them.</p>
+        </div>
       </div>
     </section>
 
@@ -112,7 +117,11 @@
           </div>
           <p id="profileStatus" class="profile-status" role="status">No local measurement loaded.</p>
         </div>
-        <div class="profile-list" id="profileList" aria-live="polite"></div>
+        <div>
+          <div class="profile-list" id="profileList" aria-live="polite"></div>
+          <div class="saved-profile-heading"><span class="console-label">Your listening profiles</span><span>Saved on this device</span></div>
+          <div class="profile-list saved-profile-list" id="savedProfileList" aria-live="polite"></div>
+        </div>
       </div>
     </section>
 

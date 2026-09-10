@@ -24,7 +24,12 @@ const stageWidth = document.querySelector('#stageWidth');
 const profileFile = document.querySelector('#profileFile');
 const profileList = document.querySelector('#profileList');
 const profileStatus = document.querySelector('#profileStatus');
+const savedProfileList = document.querySelector('#savedProfileList');
+const profileName = document.querySelector('#profileName');
+const saveProfile = document.querySelector('#saveProfile');
+const saveStatus = document.querySelector('#saveStatus');
 const profileStorageKey = 'geteqd-imported-profiles-v1';
+const savedProfileStorageKey = 'geteqd-listening-profiles-v1';
 const targetFrequencies = [32,64,250,2500,6400,12000];
 
 function safeProfiles(){
@@ -36,6 +41,12 @@ function formatDate(value){
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'});
 }
+function escapeHtml(value){ return String(value).replace(/[&<>\"']/g,character=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[character])); }
+function safeSavedProfiles(){
+  try { return JSON.parse(localStorage.getItem(savedProfileStorageKey) || '[]'); }
+  catch { return []; }
+}
+function markUnsaved(){ saveStatus.textContent='Live changes not saved yet.'; }
 function validateProfile(candidate){
   if(!candidate || candidate.schema !== 'getEQd-profile/v1') throw new Error('Schema must be getEQd-profile/v1.');
   if(typeof candidate.model !== 'string' || !candidate.model.trim()) throw new Error('Add a model name.');
@@ -58,13 +69,33 @@ function applyProfile(profile){
 }
 function renderProfiles(){
   const profiles=safeProfiles();
-  profileList.innerHTML = profiles.length ? profiles.map((profile,index)=>`<article class="profile-card"><div class="profile-card-top"><span class="version-chip">LOCAL · MEASURED</span><span class="profile-count">${profile.frequenciesHz.length} points</span></div><h3>${profile.model}</h3><p>${profile.source} · ${formatDate(profile.measuredAt)}</p>${profile.notes?`<p class="profile-notes">${profile.notes}</p>`:''}<button class="profile-apply" type="button" data-profile-index="${index}">Audition in console <span>→</span></button></article>`).join('') : '<div class="profile-empty"><strong>Your measured profiles will live here.</strong><p>Import a JSON measurement to create the first local profile. No account or upload is involved.</p></div>';
+  profileList.innerHTML = profiles.length ? profiles.map((profile,index)=>`<article class="profile-card"><div class="profile-card-top"><span class="version-chip">LOCAL · MEASURED</span><span class="profile-count">${profile.frequenciesHz.length} points</span></div><h3>${escapeHtml(profile.model)}</h3><p>${escapeHtml(profile.source)} · ${formatDate(profile.measuredAt)}</p>${profile.notes?`<p class="profile-notes">${escapeHtml(profile.notes)}</p>`:''}<button class="profile-apply" type="button" data-profile-index="${index}">Audition in console <span>→</span></button></article>`).join('') : '<div class="profile-empty"><strong>Your measured profiles will live here.</strong><p>Import a JSON measurement to create the first local profile. No account or upload is involved.</p></div>';
   profileList.querySelectorAll('[data-profile-index]').forEach(button=>button.addEventListener('click',()=>applyProfile(profiles[+button.dataset.profileIndex])));
+}
+function currentListeningSettings(){
+  return {bands:bands.map(band=>band.value),preamp:+preamp.value,limiter:+limiter.value,outputMode:outputMode.value,headphoneTarget:headphoneTarget.value,headphoneSoftware:headphoneSoftware.value,crossfeed:+crossfeed.value,stageWidth:+stageWidth.value,bypassed:document.querySelector('#bypass').classList.contains('on')};
+}
+function setBypass(enabled){
+  const button=document.querySelector('#bypass'); button.classList.toggle('on',enabled); button.setAttribute('aria-pressed',enabled); button.innerHTML=`<span class="toggle-dot"></span> ${enabled?'Processing bypassed':'Bypass'}`; document.querySelector('#console').classList.toggle('bypassed',enabled);
+}
+function applyListeningProfile(profile){
+  profile.settings.bands.forEach((value,index)=>{if(bands[index]) bands[index].value=Number(value);});
+  preamp.value=profile.settings.preamp; limiter.value=profile.settings.limiter; if([...outputMode.options].some(option=>option.value===profile.settings.outputMode)) outputMode.value=profile.settings.outputMode; headphoneTarget.value=profile.settings.headphoneTarget; headphoneSoftware.value=profile.settings.headphoneSoftware; crossfeed.value=profile.settings.crossfeed; stageWidth.value=profile.settings.stageWidth; setBypass(!!profile.settings.bypassed); renderBands(); sync(); syncHeadphones(); document.querySelectorAll('.preset').forEach(button=>button.classList.remove('active')); document.querySelector('#console').scrollIntoView({behavior:'smooth',block:'start'}); saveStatus.textContent=`Following ${profile.name}. Hot-mod it, then save again when it feels right.`;
+}
+function renderSavedProfiles(){
+  const profiles=safeSavedProfiles();
+  savedProfileList.innerHTML=profiles.length ? profiles.map((profile,index)=>`<article class="profile-card saved-profile-card"><div class="profile-card-top"><span class="version-chip">SAVED · LOCAL</span><span class="profile-count">${formatDate(profile.savedAt)}</span></div><h3>${escapeHtml(profile.name)}</h3><p>${escapeHtml(profile.settings.outputMode)} · ${profile.settings.bands.map(value=>`${value>0?'+':''}${Number(value).toFixed(1)} dB`).join(' / ')}</p><div class="saved-profile-actions"><button class="profile-apply" type="button" data-saved-index="${index}">Follow this profile <span>→</span></button><button class="profile-delete" type="button" data-delete-index="${index}" aria-label="Delete ${escapeHtml(profile.name)}">Delete</button></div></article>`).join('') : '<div class="profile-empty"><strong>Save a listening state to follow it later.</strong><p>Hot-mod the console, name the sound, and keep the complete setup on this device.</p></div>';
+  savedProfileList.querySelectorAll('[data-saved-index]').forEach(button=>button.addEventListener('click',()=>applyListeningProfile(profiles[+button.dataset.savedIndex])));
+  savedProfileList.querySelectorAll('[data-delete-index]').forEach(button=>button.addEventListener('click',()=>{const next=profiles.filter((_,index)=>index!==+button.dataset.deleteIndex); localStorage.setItem(savedProfileStorageKey,JSON.stringify(next)); renderSavedProfiles(); saveStatus.textContent='Saved profile removed from this device.';}));
+}
+function saveListeningProfile(){
+  const name=profileName.value.trim(); if(!name){saveStatus.textContent='Give this sound a name before saving.'; profileName.focus(); return;}
+  const profiles=safeSavedProfiles().filter(profile=>profile.name.toLowerCase()!==name.toLowerCase()); profiles.unshift({name,savedAt:new Date().toISOString(),settings:currentListeningSettings()}); localStorage.setItem(savedProfileStorageKey,JSON.stringify(profiles)); renderSavedProfiles(); profileName.value=''; saveStatus.textContent=`Saved ${name}. You can follow it from Your listening profiles.`;
 }
 
 function renderBands(){
   grid.innerHTML = bands.map((b,i)=>`<article class="band-card"><div class="band-top"><span class="band-index">0${i+1}</span><span class="band-index">${b.value > 0 ? '+' : ''}${b.value.toFixed(1)}</span></div><div class="band-name">${b.name}</div><div class="band-role">${b.role}</div><div class="band-value" id="bandValue${i}">${b.value > 0 ? '+' : ''}${b.value.toFixed(1)} dB</div><div class="band-hz">${b.hz}</div><input data-band="${i}" type="range" min="-12" max="11" step="0.5" value="${b.value}" aria-label="${b.name} gain"></article>`).join('');
-  grid.querySelectorAll('input').forEach(input=>input.addEventListener('input',e=>{bands[+e.target.dataset.band].value=+e.target.value; sync();}));
+  grid.querySelectorAll('input').forEach(input=>input.addEventListener('input',e=>{bands[+e.target.dataset.band].value=+e.target.value; sync(); markUnsaved();}));
 }
 function curvePoints(){
   const gains=bands.map(b=>b.value); const points=[]; const width=1000; const height=300;
@@ -84,10 +115,11 @@ function syncHeadphones(){
   headphoneDeck.dataset.target = headphoneTarget.value;
   headphoneDeck.dataset.software = headphoneSoftware.value;
 }
-document.querySelectorAll('.preset').forEach(button=>button.addEventListener('click',()=>{document.querySelectorAll('.preset').forEach(b=>b.classList.remove('active'));button.classList.add('active');presets[button.dataset.preset].forEach((v,i)=>{bands[i].value=v;});renderBands();sync();}));
-preamp.addEventListener('input',sync); limiter.addEventListener('input',sync);
-outputMode.addEventListener('change',syncHeadphones); headphoneTarget.addEventListener('change',syncHeadphones); headphoneSoftware.addEventListener('change',syncHeadphones); crossfeed.addEventListener('input',syncHeadphones); stageWidth.addEventListener('input',syncHeadphones);
-document.querySelector('#bypass').addEventListener('click',e=>{const on=e.currentTarget.classList.toggle('on');e.currentTarget.setAttribute('aria-pressed',on);e.currentTarget.innerHTML=`<span class="toggle-dot"></span> ${on?'Processing bypassed':'Bypass'}`; document.querySelector('#console').classList.toggle('bypassed',on);});
+document.querySelectorAll('.preset').forEach(button=>button.addEventListener('click',()=>{document.querySelectorAll('.preset').forEach(b=>b.classList.remove('active'));button.classList.add('active');presets[button.dataset.preset].forEach((v,i)=>{bands[i].value=v;});renderBands();sync();markUnsaved();}));
+preamp.addEventListener('input',()=>{sync();markUnsaved();}); limiter.addEventListener('input',()=>{sync();markUnsaved();});
+outputMode.addEventListener('change',()=>{syncHeadphones();markUnsaved();}); headphoneTarget.addEventListener('change',()=>{syncHeadphones();markUnsaved();}); headphoneSoftware.addEventListener('change',()=>{syncHeadphones();markUnsaved();}); crossfeed.addEventListener('input',()=>{syncHeadphones();markUnsaved();}); stageWidth.addEventListener('input',()=>{syncHeadphones();markUnsaved();});
+document.querySelector('#bypass').addEventListener('click',e=>{setBypass(!e.currentTarget.classList.contains('on'));markUnsaved();});
+saveProfile.addEventListener('click',saveListeningProfile); profileName.addEventListener('keydown',event=>{if(event.key==='Enter') saveListeningProfile();});
 document.querySelector('#importProfile').addEventListener('click',()=>profileFile.click());
 profileFile.addEventListener('change',async event=>{
   const file=event.target.files[0]; if(!file) return;
@@ -101,3 +133,4 @@ document.querySelector('#downloadTemplate').addEventListener('click',()=>{
 });
 renderBands(); sync(); syncHeadphones();
 renderProfiles();
+renderSavedProfiles();

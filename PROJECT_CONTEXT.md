@@ -15,6 +15,7 @@ getEQd is a Windows-first EQ for surround speakers and headphones. The design la
 - Supporting routes: `/changelog/` and `/download/`.
 - The download page currently provides starter profiles; the Windows installer is not packaged yet.
 - The console now includes a local Profile Lab: validated `getEQd-profile/v1` JSON imports, device-local storage, six-band auditioning, and a downloadable template. It is a calibration-data foundation, not the system-wide audio engine.
+- The console also saves named listening profiles locally, including band gains, output path, headphone controls, preamp, safety ceiling, and bypass. Saved profiles can be followed/reapplied or deleted; live changes remain unsaved until explicitly saved.
 
 ## Next product pass
 
