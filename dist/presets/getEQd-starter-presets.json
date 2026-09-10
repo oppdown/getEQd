@@ -1,0 +1,12 @@
+{
+  "product": "getEQd",
+  "version": "0.1.0-preview",
+  "bands": ["Sub foundation", "Kick body", "Low-mid", "Presence", "Detail", "Air"],
+  "profiles": {
+    "Reference": [0, 0, 0, 0, 0, 0],
+    "Impact": [4, 3, -1.5, 1, 1.5, 0.5],
+    "Dialogue": [-2, -1, -2, 2.5, 1.5, 0],
+    "Night": [-3, -2, 1, 1, -1, -2]
+  },
+  "note": "Starting points only. Tune with your room, your speakers, and your ears."
+}

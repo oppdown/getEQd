@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0a0b0d">
+  <meta name="description" content="getEQd is the Windows EQ for listeners who want the room to move and the mix to stay honest.">
+  <title>getEQd — Make the room move.</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="site-header shell">
+    <a class="wordmark" href="/" aria-label="getEQd home"><span class="wordmark-mark">∿</span>get<span>EQ</span>d</a>
+    <nav class="site-nav" aria-label="Primary navigation">
+      <a class="active" href="/">Console</a>
+      <a href="/changelog/">Changelog</a>
+      <a href="/download/">Download</a>
+    </nav>
+    <a class="header-cta" href="/download/">Get the preview <span>↗</span></a>
+  </header>
+
+  <main>
+    <section class="hero shell">
+      <div class="eyebrow"><span class="pulse-dot"></span> Windows audio, tuned by ear</div>
+      <h1>Make the room<br><em>move.</em></h1>
+      <p class="hero-copy">A focused surround EQ for people who know when a kick lands, when a vocal gets pinched, and when the tweeters are asking for mercy.</p>
+      <div class="hero-actions">
+        <a class="button button-primary" href="#console">Open the console <span>↓</span></a>
+        <a class="text-link" href="/download/">See what’s shipping <span>→</span></a>
+      </div>
+      <div class="hero-stamp" aria-hidden="true"><span>01</span><span>ROOM<br>CONTROL</span></div>
+    </section>
+
+    <section id="console" class="console-wrap shell" aria-labelledby="console-title">
+      <div class="section-kicker"><span>01 / LIVE CONSOLE</span><span>6 bands · 5.1 ready</span></div>
+      <div class="console-panel">
+        <div class="console-topline">
+          <div>
+            <div class="console-label">Listening profile</div>
+            <h2 id="console-title">Move the air. Keep the detail.</h2>
+          </div>
+          <div class="console-status"><span class="status-dot"></span> Signal clean <span class="status-divider"></span> 48 kHz</div>
+        </div>
+        <div class="console-toolbar">
+          <div class="preset-group" role="group" aria-label="EQ presets">
+            <button class="preset active" data-preset="reference">Reference</button>
+            <button class="preset" data-preset="impact">Impact</button>
+            <button class="preset" data-preset="dialogue">Dialogue</button>
+            <button class="preset" data-preset="night">Night</button>
+          </div>
+          <label class="select-wrap">Output
+            <select id="outputMode" aria-label="Output channel mode">
+              <option>5.1 Surround</option>
+              <option>2.1 Stereo</option>
+              <option>Headphones</option>
+            </select>
+          </label>
+          <button id="bypass" class="bypass" type="button" aria-pressed="false"><span class="toggle-dot"></span> Bypass</button>
+        </div>
+
+        <div class="analyzer" aria-label="EQ response analyzer">
+          <div class="analyzer-grid"></div>
+          <svg id="eqGraph" viewBox="0 0 1000 300" preserveAspectRatio="none" role="img" aria-label="Live EQ curve">
+            <defs>
+              <linearGradient id="curveGlow" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#ffb347" stop-opacity=".45"/>
+                <stop offset="1" stop-color="#ffb347" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+            <path id="curveFill" fill="url(#curveGlow)" stroke="none"></path>
+            <path id="curveLine" fill="none" stroke="#ffb347" stroke-width="3" vector-effect="non-scaling-stroke"></path>
+          </svg>
+          <div class="axis axis-y"><span>+12</span><span>0</span><span>-12</span></div>
+          <div class="axis axis-x"><span>20 Hz</span><span>100</span><span>1k</span><span>10k</span><span>20k</span></div>
+          <div class="curve-caption"><span class="curve-key"></span> PREAMP RESPONSE <strong id="curveReadout">0.0 dB</strong></div>
+        </div>
+
+        <div class="band-grid" id="bandGrid" aria-label="EQ bands"></div>
+
+        <div class="console-footer">
+          <div class="footer-control"><label for="preamp">Preamp <output id="preampValue">0.0 dB</output></label><input id="preamp" type="range" min="-12" max="11" step="0.5" value="0" aria-label="Preamp"></div>
+          <div class="footer-control"><label for="limiter">Safety ceiling <output id="limiterValue">-1.0 dB</output></label><input id="limiter" type="range" min="-6" max="0" step="0.5" value="-1" aria-label="Safety ceiling"></div>
+          <div class="footer-note"><span class="warning-icon">▲</span> 11 dB of headroom on tap. Use your ears.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="promise-grid shell" aria-label="Product principles">
+      <article class="promise-card promise-highlight"><span class="card-index">A /</span><h3>Low end<br>with intent.</h3><p>Give the sub-kick its own lane. Feel the hit at 45 Hz without turning the whole mix into fog.</p><span class="card-rule"></span><span class="card-foot">SUB / KICK · 32–80 Hz</span></article>
+      <article class="promise-card"><span class="card-index">B /</span><h3>Presence<br>without glare.</h3><p>Bring voices, snares, and string attack forward with a narrower hand—not a brighter hammer.</p><span class="card-rule"></span><span class="card-foot">PRESENCE / AIR · 1.8–12 kHz</span></article>
+      <article class="promise-card"><span class="card-index">C /</span><h3>Every channel<br>has a job.</h3><p>Shape the center, surrounds, and LFE independently. Your room is not a single speaker.</p><span class="card-rule"></span><span class="card-foot">CENTER · SURROUNDS · LFE</span></article>
+    </section>
+
+    <section class="manifesto shell">
+      <div class="section-kicker"><span>02 / THE POINT</span><span>Less guessing. More listening.</span></div>
+      <div class="manifesto-copy"><p>Most EQs give you a row of knobs and call it control. getEQd gives each move a reason.</p><a class="text-link" href="/download/">Meet the preview build <span>→</span></a></div>
+    </section>
+  </main>
+
+  <footer class="site-footer shell"><a class="wordmark" href="/" aria-label="getEQd home"><span class="wordmark-mark">∿</span>get<span>EQ</span>d</a><span>Built for the moment before “turn it up” becomes a problem.</span><span>© 2026 oppdown</span></footer>
+  <script src="/app.js"></script>
+</body>
+</html>
