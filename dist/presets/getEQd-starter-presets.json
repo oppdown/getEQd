@@ -8,5 +8,12 @@
     "Dialogue": [-2, -1, -2, 2.5, 1.5, 0],
     "Night": [-3, -2, 1, 1, -1, -2]
   },
-  "note": "Starting points only. Tune with your room, your speakers, and your ears."
+  "headphone_targets": {
+    "neutral": {"crossfeed_percent": 10, "stage_width_percent": 100},
+    "closed": {"crossfeed_percent": 8, "stage_width_percent": 96},
+    "open": {"crossfeed_percent": 14, "stage_width_percent": 108},
+    "gaming": {"crossfeed_percent": 6, "stage_width_percent": 112}
+  },
+  "software_paths": ["Direct stereo", "Windows Spatial Sound", "Game spatial mix"],
+  "note": "Starting points only. Tune with your headphones, output path, and ears. Model-specific targets should be measured before shipping."
 }

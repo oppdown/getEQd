@@ -53,10 +53,22 @@
             <select id="outputMode" aria-label="Output channel mode">
               <option>5.1 Surround</option>
               <option>2.1 Stereo</option>
-              <option>Headphones</option>
+              <option>Headphones · 3.5 mm / USB / Bluetooth</option>
             </select>
           </label>
           <button id="bypass" class="bypass" type="button" aria-pressed="false"><span class="toggle-dot"></span> Bypass</button>
+        </div>
+
+        <div id="headphoneDeck" class="headphone-deck" hidden>
+          <div class="headphone-intro"><span class="console-label">Headphone path</span><strong>Personal, not pretend surround.</strong><p>Start with a clean stereo path, then shape the stage for the way your headphones actually sit on your head.</p></div>
+          <label class="select-wrap">Target
+            <select id="headphoneTarget" aria-label="Headphone target"><option value="neutral">Neutral reference</option><option value="closed">Closed-back punch</option><option value="open">Open-back air</option><option value="gaming">Gaming headset clarity</option></select>
+          </label>
+          <label class="select-wrap">Software handoff
+            <select id="headphoneSoftware" aria-label="Headphone software handoff"><option>Direct stereo</option><option>Windows Spatial Sound</option><option>Game spatial mix</option></select>
+          </label>
+          <div class="mini-control"><label for="crossfeed">Crossfeed <output id="crossfeedValue">10%</output></label><input id="crossfeed" type="range" min="0" max="35" step="1" value="10" aria-label="Crossfeed"></div>
+          <div class="mini-control"><label for="stageWidth">Stage width <output id="stageWidthValue">100%</output></label><input id="stageWidth" type="range" min="70" max="130" step="1" value="100" aria-label="Stage width"></div>
         </div>
 
         <div class="analyzer" aria-label="EQ response analyzer">

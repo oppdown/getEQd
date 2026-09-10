@@ -15,6 +15,12 @@ const curveFill = document.querySelector('#curveFill');
 const curveReadout = document.querySelector('#curveReadout');
 const preamp = document.querySelector('#preamp');
 const limiter = document.querySelector('#limiter');
+const outputMode = document.querySelector('#outputMode');
+const headphoneDeck = document.querySelector('#headphoneDeck');
+const headphoneTarget = document.querySelector('#headphoneTarget');
+const headphoneSoftware = document.querySelector('#headphoneSoftware');
+const crossfeed = document.querySelector('#crossfeed');
+const stageWidth = document.querySelector('#stageWidth');
 
 function renderBands(){
   grid.innerHTML = bands.map((b,i)=>`<article class="band-card"><div class="band-top"><span class="band-index">0${i+1}</span><span class="band-index">${b.value > 0 ? '+' : ''}${b.value.toFixed(1)}</span></div><div class="band-name">${b.name}</div><div class="band-role">${b.role}</div><div class="band-value" id="bandValue${i}">${b.value > 0 ? '+' : ''}${b.value.toFixed(1)} dB</div><div class="band-hz">${b.hz}</div><input data-band="${i}" type="range" min="-12" max="11" step="0.5" value="${b.value}" aria-label="${b.name} gain"></article>`).join('');
@@ -29,7 +35,17 @@ function sync(){
   const pts=curvePoints(); curveLine.setAttribute('d',`M ${pts.join(' L ')}`); curveFill.setAttribute('d',`M 0 150 L ${pts.join(' L ')} L 1000 150 Z`);
   const avg=bands.reduce((a,b)=>a+b.value,0)/bands.length + +preamp.value; curveReadout.textContent=`${avg>0?'+':''}${avg.toFixed(1)} dB`; document.querySelector('#preampValue').textContent=`${+preamp.value>0?'+':''}${(+preamp.value).toFixed(1)} dB`; document.querySelector('#limiterValue').textContent=`${(+limiter.value).toFixed(1)} dB`;
 }
+function syncHeadphones(){
+  const active = outputMode.value.startsWith('Headphones');
+  headphoneDeck.hidden = !active;
+  document.querySelector('#crossfeedValue').textContent = `${crossfeed.value}%`;
+  document.querySelector('#stageWidthValue').textContent = `${stageWidth.value}%`;
+  headphoneDeck.style.setProperty('--stage-width', `${stageWidth.value}%`);
+  headphoneDeck.dataset.target = headphoneTarget.value;
+  headphoneDeck.dataset.software = headphoneSoftware.value;
+}
 document.querySelectorAll('.preset').forEach(button=>button.addEventListener('click',()=>{document.querySelectorAll('.preset').forEach(b=>b.classList.remove('active'));button.classList.add('active');presets[button.dataset.preset].forEach((v,i)=>{bands[i].value=v;});renderBands();sync();}));
 preamp.addEventListener('input',sync); limiter.addEventListener('input',sync);
+outputMode.addEventListener('change',syncHeadphones); headphoneTarget.addEventListener('change',syncHeadphones); headphoneSoftware.addEventListener('change',syncHeadphones); crossfeed.addEventListener('input',syncHeadphones); stageWidth.addEventListener('input',syncHeadphones);
 document.querySelector('#bypass').addEventListener('click',e=>{const on=e.currentTarget.classList.toggle('on');e.currentTarget.setAttribute('aria-pressed',on);e.currentTarget.innerHTML=`<span class="toggle-dot"></span> ${on?'Processing bypassed':'Bypass'}`; document.querySelector('#console').classList.toggle('bypassed',on);});
-renderBands(); sync();
+renderBands(); sync(); syncHeadphones();
