@@ -11,6 +11,23 @@ adjustable slots.
 - **Deliverables** — `dist-measured\getEQd.exe`, the current self-contained build (139 MB, no
   runtime to install), and `dist-advanced\getEQd.exe`, the earlier Advanced EQ build (63 MB)
 
+## Status and version scheme
+
+One scheme, applied here, in `PROJECT_CONTEXT.md`, and in the public changelog:
+
+| Version | Meaning | State |
+|---------|---------|-------|
+| `v0.1.x` | Public preview line: headphone pass, Profile Lab, listening profiles. | Published. This is what the live site serves. |
+| `v0.2.0` | The measured model lab in this native app. | Built and self-tested locally. Not published. |
+| `v0.3.0` | The system-wide engine. | Not started. |
+
+What exists today is the player and monitor described in this file. What does **not** exist
+yet: a Windows installer, a `Help > Check for Updates` path, and the system-wide mode.
+Anything built but unpublished is described as local, never as shipped.
+
+The packaged `.exe` files are **local build output**. They are git-ignored and are not
+repository content; when releases exist they become release assets.
+
 ## Running it
 
 Double-click `dist-measured\getEQd.exe`. Nothing else is required — the .NET runtime and the
@@ -223,6 +240,27 @@ scale invariant and a −118 dB coherent leak still correlates at 1.0000. The te
 assert the honest claims: shelf lift plus measured-equals-curve, and a level ratio for
 channel isolation.
 
+## Unit tests
+
+The self-test above proves the audio path on a real endpoint. The unit suite covers the
+parts that are easier to reason about in isolation, and it runs in CI.
+
+```powershell
+& ".\.tools\dotnet\dotnet.exe" test windows\tests\GetEQd.Tests\GetEQd.Tests.csproj
+```
+
+34 tests across four files:
+
+| File | What it pins down |
+|------|-------------------|
+| `AudioMathTests.cs` | Every filter shape at frequencies where the Cookbook formula has a known answer, plus a sine pushed through the section compared against the analytic response |
+| `CurveInvariantTests.cs` | The drawn curve against **measured audio** through the built filters, the preamp's place in the chain, a bypassed band contributing nothing, and the headroom suggestion |
+| `MeasurementProfileTests.cs` | The importer accepting good data, refusing eight kinds of bad data with the right message, legacy correction files, and the audit export carrying its own provenance |
+| `SettingsRoundTripTests.cs` | Settings surviving the stored shape and JSON, and hostile stored values being clamped rather than trusted |
+
+`.github\workflows\ci.yml` builds the console and runs this suite on `windows-latest`. The
+self-test stays a local gate because a hosted runner has no audio endpoint.
+
 ## Building from source
 
 Requires the .NET 8 SDK. On this machine it is installed locally at `.tools\dotnet`
@@ -247,11 +285,14 @@ $root = 'C:\Users\phill\Documents\GetEQd Workspace\windows'
 
 ```
 windows\
-  dist-measured\getEQd.exe        current measured-model-lab single file
-  dist-advanced\getEQd.exe        prior Advanced EQ single file
-  dist\getEQd.exe                 earliest single file, left in place while it was running
-  geteqd-*-selftest.txt           recorded self-test reports
-  preview\                        rendered UI previews
+  dist-measured\getEQd.exe        current measured-model-lab single file (ignored)
+  dist-advanced\getEQd.exe        prior Advanced EQ single file (ignored)
+  dist\getEQd.exe                 earliest single file, left in place while it was running (ignored)
+  geteqd-*-selftest.txt           recorded self-test reports (ignored)
+  preview\                        rendered UI previews (ignored)
+  docs\                           integration notes: the updater contract, the APO spec
+  profiles\                       sourced measurement data with provenance
+  tests\GetEQd.Tests\             the unit suite
   src\GetEQd.App\
     Audio\
       Biquad.cs                   RBJ filter designs + magnitude response
@@ -273,10 +314,20 @@ windows\
 
 ## What this is not
 
-- **Not system-wide.** It is a player and monitor, not an Equalizer APO style filter that
-  sits in front of every application's audio. Intercepting another process's stream needs
-  a kernel-mode APO or a virtual audio driver, which means driver signing and a different
-  risk profile entirely. That was deliberately left out of scope.
+- **Not system-wide yet.** Today it is a player and monitor: it filters the audio it plays
+  plus its own probe signals. Other applications' streams are untouched.
+
+  The decided route for `v0.3.0` is to make getEQd the **front end** for Equalizer APO
+  rather than to write a driver. getEQd would generate APO configuration and APO would stay
+  the filter engine, with the user installing APO themselves. That gives real system-wide EQ
+  at no signing cost, and the intent is that switching between "player and monitor" and "APO
+  configuration generator" is a mode rather than a rewrite. Writing a kernel-mode APO or a
+  virtual audio driver is still rejected: it needs an Extended Validation certificate and a
+  Microsoft Partner Center hardware account, roughly $200-500 a year plus identity
+  verification.
+
+  None of that is built. `docs\equalizer-apo-integration.md` records what the config format
+  requires and what the approach cannot do.
 - **Not a headphone measurement database.** The targets are category curves and are
   labelled that way in the interface.
 - The app is unsigned, so SmartScreen will warn on first run.
