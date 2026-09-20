@@ -87,9 +87,10 @@ One scheme, applied to the public changelog, the download page, and this documen
 
 ## Open decisions
 
-- Publish status: the live site is still the v0.1.3 listening-profile revision. The Advanced EQ,
-  the measured model lab, and the changelog entries for them are local only. Publishing them is
-  the last step of this pass.
+- Publish status: **resolved.** The live site is now the v0.2.0 revision (deployed as version 5).
+  The changelog carries the measured model lab entry, the download chip reads `v0.2.0`, and the
+  measurement template is labelled "Measurement JSON template". Verified against the live URL,
+  not just the deploy response.
 - The desktop app now has a home: `https://github.com/oppdown/getEQd`, **public**, with `v0.2.0`
   published as a release carrying `getEQd.exe` and `getEQd-0.2.0.msi`. It was created private and
   had to be made public, because GitHub's release API answers 404 for a private repository and the
@@ -105,8 +106,17 @@ One scheme, applied to the public changelog, the download page, and this documen
   the packaged 145 MB and 66 MB executables reachable, so the earlier prune reclaimed almost
   nothing. With those refs dropped and the objects expired, `.git` went from 117 MB to 0.13 MB.
   History was not rewritten; the six commits are intact.
-- `windows\dist\getEQd.exe` was left untouched because it was running during packaging. Replace
-  it with the current measured build once nothing holds the file open.
-- Still open: the installer, `Help > Check for Updates`, a GitHub repository for the app source
-  and releases, and real measured headphone data. See the version scheme above for what each
-  one gates.
+- Resolved: the installer (per-user MSI, verified install/launch/uninstall), the update check
+  in the app's Updates card with every state verified, the GitHub repository and its v0.2.0
+  release, and five sourced headphone measurements with provenance.
+- `windows\dist\getEQd.exe` is still the oldest build, left in place because it was running
+  during packaging. Nothing depends on it; the shipped build is `windows\dist-v0.2.0`.
+- Open decision: the measurement data is not yet offered in the app. Importing the profiles in
+  `windows\profiles\` works today through the lab; bundling them as a shipped set is a product
+  call that waits on the licensing question below.
+- Open decision: **the installer is not offered on the public download page.** The guardrail
+  forbids repository, source, or release links there, and the GitHub release is exactly that.
+  Serving the MSI from the site itself, or linking the release page, is the owner's call.
+- Open decision: the sourced measurement data's upstream licensing is unresolved. AutoEq
+  redistributes it under MIT, but oratory1990 states no terms. `windows\profiles\PROVENANCE.md`
+  records the facts; a human needs to confirm this before the data ships publicly in the app.
