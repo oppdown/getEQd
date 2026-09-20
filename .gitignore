@@ -17,12 +17,16 @@ windows/geteqd*-selftest.txt
 windows/dist/
 windows/dist-advanced/
 windows/dist-measured/
+windows/dist-v*/
 windows/preview/
 *.exe
 *.pdb
 
 # Scratch space for measurement sourcing. Working files belong in %TEMP%, not here.
 windows/profiles/_scratch/
+
+# Built installers.
+windows/installer/dist/
 
 # OS noise.
 Thumbs.db

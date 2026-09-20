@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+
+  <!--
+    getEQd for Windows.
+
+    Per-user on purpose: the app is unsigned, and a per-user install needs no elevation,
+    so the whole install / launch / uninstall cycle can be verified without an admin
+    prompt. The expected location is %LOCALAPPDATA%\Programs\getEQd.
+
+    The executable is self-contained, so there is nothing else to install.
+  -->
+  <Package
+      Name="getEQd for Windows"
+      Manufacturer="oppdown"
+      Version="0.2.0"
+      UpgradeCode="6f1c2d84-3a5e-4b19-8c7d-1e0a4b6f9d21"
+      Scope="perUser"
+      Compressed="yes">
+
+    <MajorUpgrade DowngradeErrorMessage="A newer version of getEQd is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+
+    <StandardDirectory Id="LocalAppDataFolder">
+      <Directory Id="ProgramsFolder" Name="Programs">
+        <Directory Id="INSTALLFOLDER" Name="getEQd" />
+      </Directory>
+    </StandardDirectory>
+
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Directory Id="ApplicationProgramsFolder" Name="getEQd" />
+    </StandardDirectory>
+
+    <Feature Id="Main" Title="getEQd for Windows" Level="1">
+      <ComponentGroupRef Id="AppFiles" />
+      <ComponentRef Id="StartMenuShortcuts" />
+    </Feature>
+  </Package>
+
+  <Fragment>
+    <ComponentGroup Id="AppFiles" Directory="INSTALLFOLDER">
+      <Component Id="MainExecutable" Guid="2c9b7a10-5d43-4e88-9f61-7a3c5e8b4d02">
+        <File Id="getEQdExe" Source="$(var.SourceExe)" KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+  </Fragment>
+
+  <Fragment>
+    <Component Id="StartMenuShortcuts" Directory="ApplicationProgramsFolder"
+               Guid="b41e6f93-8c27-4a5d-b0e9-3d7f2a6c9184">
+      <Shortcut Id="StartMenuShortcut"
+                Name="getEQd"
+                Description="Real-time EQ console for surround speakers and headphones"
+                Target="[INSTALLFOLDER]getEQd.exe"
+                WorkingDirectory="INSTALLFOLDER"
+                Advertise="no" />
+      <RemoveFolder Id="RemoveApplicationProgramsFolder" Directory="ApplicationProgramsFolder" On="uninstall" />
+      <RegistryValue Root="HKCU" Key="Software\oppdown\getEQd" Name="Installed" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+  </Fragment>
+
+</Wix>

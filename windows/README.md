@@ -281,6 +281,38 @@ $root = 'C:\Users\phill\Documents\GetEQd Workspace\windows'
     -p:DebugType=none -o "$root\dist-advanced"
 ```
 
+### The installer
+
+`installer\getEQd.wxs` builds an MSI around the packaged executable. WiX is pinned in
+`windows\.config\dotnet-tools.json`, so there is nothing to install by hand:
+
+```powershell
+pwsh -File windows\installer\build-installer.ps1
+```
+
+It installs **per user**, to `%LOCALAPPDATA%\Programs\getEQd`, with a Start Menu shortcut.
+Per-user is deliberate: the app is unsigned, so a per-user install needs no elevation and
+the whole install / launch / uninstall cycle can be checked without an admin prompt.
+Uninstalling removes the program and the shortcut and leaves your saved profiles in
+`%LOCALAPPDATA%\getEQd` alone.
+
+**The app is not code-signed, so SmartScreen will warn on first run.** That is a fact about
+the current state, not something the installer hides. Fixing it needs a code-signing
+certificate.
+
+The verified cycle, run against the v0.2.0 build:
+
+| Step | Result |
+|------|--------|
+| Install silently, per user | exit 0, `getEQd.exe` in `%LOCALAPPDATA%\Programs\getEQd` |
+| Start Menu shortcut | created |
+| Installed binary `--selftest` | all 60 checks passed |
+| Launch the console | window opens, process responding, closes cleanly |
+| Uninstall | exit 0, program and shortcut gone, `%LOCALAPPDATA%\getEQd` preserved |
+
+WiX 7 is not usable here: it gates behind the Open Source Maintenance Fee EULA. The tool
+manifest pins WiX 5, which is free.
+
 ### Layout
 
 ```

@@ -10,7 +10,7 @@
     <AssemblyName>getEQd</AssemblyName>
     <RootNamespace>GetEQd</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <Version>1.0.0</Version>
+    <Version>0.2.0</Version>
     <Product>getEQd for Windows</Product>
     <Company>oppdown</Company>
     <Description>Native Windows real-time EQ for surround speakers and headphones.</Description>
