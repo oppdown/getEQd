@@ -1,0 +1,42 @@
+name: ci
+
+# Builds the native console and runs the unit suite on every change.
+#
+# The acceptance check is still the app's own self-test, which measures real audio
+# output against the drawn curve. It needs a working audio endpoint, so it stays a
+# local gate rather than a hosted-runner one; see AGENTS.md.
+
+on:
+  push:
+    branches:
+      - main
+      - "codex/**"
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  windows:
+    name: build and test
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Install the .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Build the console
+        run: dotnet build windows/src/GetEQd.App/GetEQd.App.csproj -c Release --nologo
+
+      - name: Run the unit tests
+        run: dotnet test windows/tests/GetEQd.Tests/GetEQd.Tests.csproj -c Release --nologo
+
+      - name: Report the self-test gate
+        shell: pwsh
+        run: |
+          Write-Host "Unit tests cover the audio math, the drawn-curve invariant, profile import and validation, and settings round-tripping."
+          Write-Host "Before a release, run the acceptance check on a machine with audio:"
+          Write-Host "  windows\dist-measured\getEQd.exe --selftest report.txt"

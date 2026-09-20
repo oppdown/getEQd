@@ -21,6 +21,9 @@ windows/preview/
 *.exe
 *.pdb
 
+# Scratch space for measurement sourcing. Working files belong in %TEMP%, not here.
+windows/profiles/_scratch/
+
 # OS noise.
 Thumbs.db
 Desktop.ini
