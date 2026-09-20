@@ -112,12 +112,29 @@
           <p>Import a frequency-response profile from a measurement workflow. getEQd checks the file, keeps it on this device, and lets you audition a six-band preview without changing the source data.</p>
           <div class="profile-actions">
             <button id="importProfile" class="button button-primary" type="button">Import measurement <span>↑</span></button>
-            <button id="downloadTemplate" class="button button-quiet" type="button">Download JSON template <span>↓</span></button>
+            <button id="downloadTemplate" class="button button-quiet" type="button">Download measurement template <span>↓</span></button>
             <input id="profileFile" type="file" accept="application/json,.json" hidden>
           </div>
           <p id="profileStatus" class="profile-status" role="status">No local measurement loaded.</p>
         </div>
         <div>
+          <div class="measurement-inspector" id="measurementInspector" hidden>
+            <div class="saved-profile-heading"><span class="console-label">Selected measurement</span><span id="measurementMode">No model selected</span></div>
+            <h3 id="measurementName">Choose an imported profile</h3>
+            <p id="measurementMeta">Raw response, target, and correction stay visibly separate.</p>
+            <div class="measurement-chart" aria-label="Raw measurement, target, and correction comparison">
+              <svg viewBox="0 0 1000 260" preserveAspectRatio="none" role="img" aria-label="Measurement comparison graph">
+                <line class="measurement-axis" x1="0" y1="130" x2="1000" y2="130"></line>
+                <path id="rawProfileLine" class="measurement-line measurement-raw" fill="none"></path>
+                <path id="targetProfileLine" class="measurement-line measurement-target" fill="none"></path>
+                <path id="correctionProfileLine" class="measurement-line measurement-correction" fill="none"></path>
+              </svg>
+              <div class="measurement-legend"><span class="measurement-key measurement-raw-key">RAW</span><span class="measurement-key measurement-target-key">TARGET</span><span class="measurement-key measurement-correction-key">CORRECTION</span></div>
+            </div>
+            <div class="measurement-stats"><span>RAW PEAK <strong id="measurementRawPeak">—</strong></span><span>CORRECTION PEAK <strong id="measurementCorrectionPeak">—</strong></span><span>SAFE PREAMP <strong id="measurementPreamp">—</strong></span></div>
+            <div class="measurement-actions"><button id="applyMeasurement" class="button button-primary" type="button">Apply correction</button><button id="exportMeasurement" class="button button-quiet" type="button">Export audit</button></div>
+            <p id="measurementAudit" class="profile-status">The imported source remains unchanged.</p>
+          </div>
           <div class="profile-list" id="profileList" aria-live="polite"></div>
           <div class="saved-profile-heading"><span class="console-label">Your listening profiles</span><span>Saved on this device</span></div>
           <div class="profile-list saved-profile-list" id="savedProfileList" aria-live="polite"></div>

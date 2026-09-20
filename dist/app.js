@@ -28,12 +28,26 @@ const savedProfileList = document.querySelector('#savedProfileList');
 const profileName = document.querySelector('#profileName');
 const saveProfile = document.querySelector('#saveProfile');
 const saveStatus = document.querySelector('#saveStatus');
+const measurementInspector = document.querySelector('#measurementInspector');
+const measurementMode = document.querySelector('#measurementMode');
+const measurementName = document.querySelector('#measurementName');
+const measurementMeta = document.querySelector('#measurementMeta');
+const rawProfileLine = document.querySelector('#rawProfileLine');
+const targetProfileLine = document.querySelector('#targetProfileLine');
+const correctionProfileLine = document.querySelector('#correctionProfileLine');
+const measurementRawPeak = document.querySelector('#measurementRawPeak');
+const measurementCorrectionPeak = document.querySelector('#measurementCorrectionPeak');
+const measurementPreamp = document.querySelector('#measurementPreamp');
+const applyMeasurement = document.querySelector('#applyMeasurement');
+const exportMeasurement = document.querySelector('#exportMeasurement');
+const measurementAudit = document.querySelector('#measurementAudit');
 const profileStorageKey = 'geteqd-imported-profiles-v1';
 const savedProfileStorageKey = 'geteqd-listening-profiles-v1';
 const targetFrequencies = [32,64,250,2500,6400,12000];
+let selectedMeasurement = null;
 
 function safeProfiles(){
-  try { return JSON.parse(localStorage.getItem(profileStorageKey) || '[]'); }
+  try { const profiles=JSON.parse(localStorage.getItem(profileStorageKey) || '[]'); return Array.isArray(profiles) ? profiles.map(profile=>({...profile,responseType:profile.responseType==='raw'?'raw':'correction',rig:typeof profile.rig==='string'?profile.rig:'',target:typeof profile.target==='string'?profile.target:'',targetDb:Array.isArray(profile.targetDb)?profile.targetDb:(Array.isArray(profile.frequenciesHz)?profile.frequenciesHz.map(()=>0):[])})) : []; }
   catch { return []; }
 }
 function formatDate(value){
@@ -43,7 +57,7 @@ function formatDate(value){
 }
 function escapeHtml(value){ return String(value).replace(/[&<>\"']/g,character=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[character])); }
 function safeSavedProfiles(){
-  try { return JSON.parse(localStorage.getItem(savedProfileStorageKey) || '[]'); }
+  try { const profiles=JSON.parse(localStorage.getItem(savedProfileStorageKey) || '[]'); return Array.isArray(profiles) ? profiles.map(profile=>({name:typeof profile?.name==='string'?profile.name:'Untitled profile',savedAt:profile?.savedAt||'',settings:{bands:Array.isArray(profile?.settings?.bands)&&profile.settings.bands.length===bands.length?profile.settings.bands.map(Number):bands.map(band=>band.value),preamp:Number(profile?.settings?.preamp)||0,limiter:Number(profile?.settings?.limiter)||0,outputMode:profile?.settings?.outputMode||outputMode.options[0].value,headphoneTarget:profile?.settings?.headphoneTarget||headphoneTarget.options[0].value,headphoneSoftware:profile?.settings?.headphoneSoftware||headphoneSoftware.options[0].value,crossfeed:Number(profile?.settings?.crossfeed)||0,stageWidth:Number(profile?.settings?.stageWidth)||100,bypassed:!!profile?.settings?.bypassed}})) : []; }
   catch { return []; }
 }
 function markUnsaved(){ saveStatus.textContent='Live changes not saved yet.'; }
@@ -52,25 +66,73 @@ function validateProfile(candidate){
   if(typeof candidate.model !== 'string' || !candidate.model.trim()) throw new Error('Add a model name.');
   if(!Array.isArray(candidate.frequenciesHz) || !Array.isArray(candidate.gainDb) || candidate.frequenciesHz.length !== candidate.gainDb.length || candidate.frequenciesHz.length < 2) throw new Error('Frequencies and gainDb must be matching arrays with at least two points.');
   if(candidate.frequenciesHz.some((value,i)=>!Number.isFinite(value) || value <= 0 || !Number.isFinite(candidate.gainDb[i]))) throw new Error('Frequency and gain values must be finite numbers.');
-  return {schema:'getEQd-profile/v1',model:candidate.model.trim(),source:typeof candidate.source === 'string' && candidate.source.trim() ? candidate.source.trim() : 'Local import',measuredAt:candidate.measuredAt || '',notes:typeof candidate.notes === 'string' ? candidate.notes.trim() : '',frequenciesHz:candidate.frequenciesHz.map(Number),gainDb:candidate.gainDb.map(Number)};
+  const responseType = typeof candidate.responseType === 'string' && candidate.responseType.trim() ? candidate.responseType.trim().toLowerCase() : 'correction';
+  if(responseType !== 'raw' && responseType !== 'correction') throw new Error('responseType must be raw or correction.');
+  const targetDb = candidate.targetDb === undefined ? candidate.frequenciesHz.map(()=>0) : candidate.targetDb;
+  if(!Array.isArray(targetDb) || targetDb.length !== candidate.frequenciesHz.length || targetDb.some(value=>!Number.isFinite(value))) throw new Error('targetDb must be an array matching frequenciesHz.');
+  return {schema:'getEQd-profile/v1',model:candidate.model.trim(),source:typeof candidate.source === 'string' && candidate.source.trim() ? candidate.source.trim() : 'Local import',measuredAt:candidate.measuredAt || '',rig:typeof candidate.rig === 'string' ? candidate.rig.trim() : '',target:typeof candidate.target === 'string' ? candidate.target.trim() : '',responseType,notes:typeof candidate.notes === 'string' ? candidate.notes.trim() : '',frequenciesHz:candidate.frequenciesHz.map(Number),gainDb:candidate.gainDb.map(Number),targetDb:targetDb.map(Number)};
 }
-function interpolate(profile, frequency){
-  const points = profile.frequenciesHz.map((hz,i)=>({hz,gain:profile.gainDb[i]})).sort((a,b)=>a.hz-b.hz);
+function interpolateValues(frequencies, values, frequency){
+  const points = frequencies.map((hz,i)=>({hz,gain:values[i]})).sort((a,b)=>a.hz-b.hz);
   if(frequency <= points[0].hz) return points[0].gain;
   if(frequency >= points[points.length-1].hz) return points[points.length-1].gain;
   const upper = points.findIndex(point=>point.hz >= frequency); const low = points[upper-1]; const high = points[upper];
   const ratio = (Math.log(frequency)-Math.log(low.hz))/(Math.log(high.hz)-Math.log(low.hz));
   return low.gain + (high.gain-low.gain)*ratio;
 }
+function rawAt(profile,frequency){return interpolateValues(profile.frequenciesHz,profile.gainDb,frequency);}
+function targetAt(profile,frequency){return interpolateValues(profile.frequenciesHz,profile.targetDb,frequency);}
+function correctionAt(profile,frequency){const raw=rawAt(profile,frequency);return profile.responseType==='raw' ? targetAt(profile,frequency)-raw : raw;}
 function applyProfile(profile){
-  targetFrequencies.forEach((frequency,index)=>{bands[index].value=Math.max(-12,Math.min(11,Math.round(interpolate(profile,frequency)*2)/2));});
+  selectedMeasurement=profile; renderMeasurementInspector();
+  targetFrequencies.forEach((frequency,index)=>{bands[index].value=Math.max(-12,Math.min(11,Math.round(correctionAt(profile,frequency)*2)/2));});
   document.querySelectorAll('.preset').forEach(button=>button.classList.remove('active')); renderBands(); sync(); document.querySelector('#console').scrollIntoView({behavior:'smooth',block:'start'});
-  profileStatus.textContent = `${profile.model} applied to the six-band preview. Original measurement remains unchanged.`;
+  profileStatus.textContent = `${profile.model} correction applied to the six-band preview. Original measurement remains unchanged.`;
 }
 function renderProfiles(){
   const profiles=safeProfiles();
-  profileList.innerHTML = profiles.length ? profiles.map((profile,index)=>`<article class="profile-card"><div class="profile-card-top"><span class="version-chip">LOCAL · MEASURED</span><span class="profile-count">${profile.frequenciesHz.length} points</span></div><h3>${escapeHtml(profile.model)}</h3><p>${escapeHtml(profile.source)} · ${formatDate(profile.measuredAt)}</p>${profile.notes?`<p class="profile-notes">${escapeHtml(profile.notes)}</p>`:''}<button class="profile-apply" type="button" data-profile-index="${index}">Audition in console <span>→</span></button></article>`).join('') : '<div class="profile-empty"><strong>Your measured profiles will live here.</strong><p>Import a JSON measurement to create the first local profile. No account or upload is involved.</p></div>';
-  profileList.querySelectorAll('[data-profile-index]').forEach(button=>button.addEventListener('click',()=>applyProfile(profiles[+button.dataset.profileIndex])));
+  profileList.innerHTML = profiles.length ? profiles.map((profile,index)=>`<article class="profile-card"><div class="profile-card-top"><span class="version-chip">LOCAL · ${profile.responseType==='raw'?'RAW MEASURED':'CORRECTION'}</span><span class="profile-count">${profile.frequenciesHz.length} points</span></div><h3>${escapeHtml(profile.model)}</h3><p>${escapeHtml(profile.source)} · ${formatDate(profile.measuredAt)}</p><p>${escapeHtml(profile.rig||'Rig not supplied')} · ${escapeHtml(profile.target||'Flat target')}</p>${profile.notes?`<p class="profile-notes">${escapeHtml(profile.notes)}</p>`:''}<button class="profile-apply" type="button" data-profile-index="${index}">Open in model lab <span>→</span></button><button class="profile-apply" type="button" data-audition-index="${index}">Audition correction <span>→</span></button></article>`).join('') : '<div class="profile-empty"><strong>Your measured profiles will live here.</strong><p>Import a JSON measurement to create the first local profile. No account or upload is involved.</p></div>';
+  profileList.querySelectorAll('[data-profile-index]').forEach(button=>button.addEventListener('click',()=>{selectedMeasurement=profiles[+button.dataset.profileIndex];renderMeasurementInspector();}));
+  profileList.querySelectorAll('[data-audition-index]').forEach(button=>button.addEventListener('click',()=>applyProfile(profiles[+button.dataset.auditionIndex])));
+}
+function profilePeak(profile,correction=false){
+  let peak=-Infinity;
+  for(let index=0;index<=240;index++){
+    const frequency=20*Math.pow(1000,index/240);
+    const value=correction?correctionAt(profile,frequency):rawAt(profile,frequency);
+    if(value>peak) peak=value;
+  }
+  return Number.isFinite(peak)?peak:0;
+}
+function dbLabel(value){return `${value>0?'+':''}${value.toFixed(1)} dB`;}
+function measurementPath(profile,mode){
+  const points=[];
+  for(let x=0;x<=1000;x+=10){
+    const frequency=20*Math.pow(1000,x/1000);
+    const value=mode==='raw'?rawAt(profile,frequency):mode==='target'?targetAt(profile,frequency):correctionAt(profile,frequency);
+    const y=Math.max(8,Math.min(252,130-(value/15)*108));
+    points.push(`${x.toFixed(1)},${y.toFixed(1)}`);
+  }
+  return `M ${points.join(' L ')}`;
+}
+function renderMeasurementInspector(){
+  if(!selectedMeasurement){measurementInspector.hidden=true;return;}
+  const profile=selectedMeasurement;
+  const rawPeak=profilePeak(profile); const correctionPeak=profilePeak(profile,true);
+  measurementInspector.hidden=false;
+  measurementMode.textContent=profile.responseType==='raw'?'RAW MEASUREMENT':'CORRECTION DATA';
+  measurementName.textContent=profile.model;
+  measurementMeta.textContent=`${profile.source} · ${formatDate(profile.measuredAt)} · ${profile.rig||'Rig not supplied'} · ${profile.target||'Flat target'}`;
+  rawProfileLine.setAttribute('d',measurementPath(profile,'raw')); targetProfileLine.setAttribute('d',measurementPath(profile,'target')); correctionProfileLine.setAttribute('d',measurementPath(profile,'correction'));
+  measurementRawPeak.textContent=dbLabel(rawPeak); measurementCorrectionPeak.textContent=dbLabel(correctionPeak); measurementPreamp.textContent=dbLabel(Math.max(-12,Math.min(11,-1-correctionPeak)));
+  measurementAudit.textContent=`${profile.frequenciesHz.length} points · ${profile.responseType==='raw'?'correction = target minus raw response':'correction = imported gainDb'}. The source remains unchanged.`;
+}
+function exportSelectedAudit(){
+  if(!selectedMeasurement) return;
+  const profile=selectedMeasurement;
+  const correctionDb=profile.frequenciesHz.map((_,index)=>profile.responseType==='raw'?(profile.targetDb[index]||0)-profile.gainDb[index]:profile.gainDb[index]);
+  const audit={schema:'getEQd-calibration-audit/v1',generatedAt:new Date().toISOString(),measurement:{schema:profile.schema,model:profile.model,source:profile.source,measuredAt:profile.measuredAt,rig:profile.rig,target:profile.target,responseType:profile.responseType,notes:profile.notes,frequenciesHz:profile.frequenciesHz,rawDb:profile.gainDb,targetDb:profile.targetDb,correctionDb},quickBandFrequenciesHz:targetFrequencies,quickBandCorrectionDb:targetFrequencies.map(frequency=>Math.max(-12,Math.min(11,Math.round(correctionAt(profile,frequency)*2)/2)))};
+  const link=document.createElement('a'); link.href=URL.createObjectURL(new Blob([JSON.stringify(audit,null,2)],{type:'application/json'})); link.download=`${profile.model.replace(/[^a-z0-9]+/gi,'-').replace(/^-|-$/g,'')||'geteqd-measurement'}-audit.json`; link.click(); URL.revokeObjectURL(link.href); measurementAudit.textContent='Calibration audit exported. Raw, target, correction and quick-band landing are included.';
 }
 function currentListeningSettings(){
   return {bands:bands.map(band=>band.value),preamp:+preamp.value,limiter:+limiter.value,outputMode:outputMode.value,headphoneTarget:headphoneTarget.value,headphoneSoftware:headphoneSoftware.value,crossfeed:+crossfeed.value,stageWidth:+stageWidth.value,bypassed:document.querySelector('#bypass').classList.contains('on')};
@@ -123,14 +185,17 @@ saveProfile.addEventListener('click',saveListeningProfile); profileName.addEvent
 document.querySelector('#importProfile').addEventListener('click',()=>profileFile.click());
 profileFile.addEventListener('change',async event=>{
   const file=event.target.files[0]; if(!file) return;
-  try { const profile=validateProfile(JSON.parse(await file.text())); const profiles=safeProfiles().filter(item=>item.model.toLowerCase()!==profile.model.toLowerCase()); profiles.unshift(profile); localStorage.setItem(profileStorageKey,JSON.stringify(profiles)); renderProfiles(); profileStatus.textContent=`Imported ${profile.model}. The source file stays on your device.`; }
+  try { const profile=validateProfile(JSON.parse(await file.text())); const profiles=safeProfiles().filter(item=>item.model.toLowerCase()!==profile.model.toLowerCase()); profiles.unshift(profile); localStorage.setItem(profileStorageKey,JSON.stringify(profiles)); selectedMeasurement=profile; renderProfiles(); renderMeasurementInspector(); profileStatus.textContent=`Imported ${profile.model}. The source file stays on your device.`; }
   catch(error) { profileStatus.textContent=`Import not accepted: ${error.message}`; }
   event.target.value='';
 });
 document.querySelector('#downloadTemplate').addEventListener('click',()=>{
-  const template={schema:'getEQd-profile/v1',model:'Your headphone or speaker model',source:'Measurement source or rig',measuredAt:'2026-09-10',notes:'Add how this measurement was made.',frequenciesHz:[20,32,64,125,250,500,1000,2000,4000,8000,12000,16000,20000],gainDb:[0,0,0,0,0,0,0,0,0,0,0,0,0]};
+  const template={schema:'getEQd-profile/v1',model:'Your headphone or speaker model',source:'Measurement source',measuredAt:'2026-09-12',rig:'Measurement rig and fixture',target:'Target curve name or flat',responseType:'raw',notes:'Add how this measurement was made.',frequenciesHz:[20,32,64,125,250,500,1000,2000,4000,8000,12000,16000,20000],gainDb:[0,0,0,0,0,0,0,0,0,0,0,0,0],targetDb:[0,0,0,0,0,0,0,0,0,0,0,0,0]};
   const link=document.createElement('a'); link.href=URL.createObjectURL(new Blob([JSON.stringify(template,null,2)],{type:'application/json'})); link.download='getEQd-profile-template.json'; link.click(); URL.revokeObjectURL(link.href);
 });
+applyMeasurement.addEventListener('click',()=>{if(selectedMeasurement) applyProfile(selectedMeasurement);});
+exportMeasurement.addEventListener('click',exportSelectedAudit);
 renderBands(); sync(); syncHeadphones();
 renderProfiles();
 renderSavedProfiles();
+renderMeasurementInspector();
