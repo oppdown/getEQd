@@ -10,6 +10,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 using GetEQd.Audio;
+using GetEQd.Updates;
 using Microsoft.Win32;
 
 namespace GetEQd.Ui
@@ -43,6 +44,9 @@ namespace GetEQd.Ui
         private int _deviceCount;
         private int _fitAttempts;
 
+        private bool _updateCheckRunning;
+        private string? _latestReleaseUrl;
+
         private bool _updating;
         private bool _userSeeking;
         private bool _shutdown;
@@ -67,6 +71,9 @@ namespace GetEQd.Ui
 
             LoadStoredProfiles();
             LoadOutputDevices();
+
+            BuildVersionText.Text = "getEQd " + UpdateChecker.CurrentVersion.ToString(3) +
+                                    " · " + (Environment.Is64BitProcess ? "64-bit" : "32-bit");
 
             _timer = new DispatcherTimer(DispatcherPriority.Render)
             {
@@ -616,6 +623,62 @@ namespace GetEQd.Ui
 
             _timer.Stop();
             _engine.Dispose();
+        }
+
+        // ================================================================ updates
+
+        /// <summary>
+        /// Asks GitHub Releases whether a newer build exists.
+        ///
+        /// Every outcome writes a line, so the check cannot leave the button stuck on
+        /// "checking". The request is bounded by the checker's own timeout, which means a
+        /// dead network ends in the offline state rather than a spinner.
+        /// </summary>
+        private async void CheckUpdatesButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (_updateCheckRunning) return;
+
+            _updateCheckRunning = true;
+            CheckUpdatesButton.IsEnabled = false;
+            UpdateStatusText.Foreground = FindBrush("TextMuted");
+            UpdateStatusText.Text = "Checking GitHub Releases...";
+
+            try
+            {
+                UpdateCheckResult result = await UpdateChecker.CheckAsync(UpdateChecker.CurrentVersion);
+
+                UpdateStatusText.Text = result.Message;
+                UpdateStatusText.Foreground = FindBrush(
+                    result.State == UpdateState.UpdateAvailable ? "AccentText" :
+                    result.State == UpdateState.UpToDate ? "GoodFill" : "TextMuted");
+
+                _latestReleaseUrl = result.ReleaseUrl;
+                OpenReleaseButton.Visibility = string.IsNullOrWhiteSpace(result.ReleaseUrl)
+                    ? Visibility.Collapsed
+                    : Visibility.Visible;
+                OpenReleaseButton.IsEnabled = result.HasUpdate;
+                CheckUpdatesButton.Content = result.HasUpdate ? "Check again" : "Check for updates";
+            }
+            finally
+            {
+                _updateCheckRunning = false;
+                CheckUpdatesButton.IsEnabled = true;
+            }
+        }
+
+        private void OpenReleaseButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(_latestReleaseUrl)) return;
+
+            try
+            {
+                Process.Start(new ProcessStartInfo(_latestReleaseUrl) { UseShellExecute = true });
+            }
+            catch (Exception error)
+            {
+                UpdateStatusText.Foreground = FindBrush("BadFill");
+                UpdateStatusText.Text = "Could not open the release page: " + error.Message;
+            }
         }
 
         // ================================================================ state flow

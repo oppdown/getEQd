@@ -88,7 +88,14 @@ One scheme, applied to the public changelog, the download page, and this documen
 ## Open decisions
 
 - Publish status: the live site is still the v0.1.3 listening-profile revision. The Advanced EQ,
-  the measured model lab, and the changelog entries for them are local only.
+  the measured model lab, and the changelog entries for them are local only. Publishing them is
+  the last step of this pass.
+- The desktop app now has a home: `https://github.com/oppdown/getEQd`, **public**, with `v0.2.0`
+  published as a release carrying `getEQd.exe` and `getEQd-0.2.0.msi`. It was created private and
+  had to be made public, because GitHub's release API answers 404 for a private repository and the
+  update check cannot authenticate. If the source must go private again, the update channel has to
+  move to a version manifest on the public site, or `Help > Check for updates` stops working for
+  everyone including the owner.
 - Resolved: the Windows app source is tracked. `windows\src`, `windows\tests`, `windows\README.md`
   and `AGENTS.md` are committed on the `codex/ship-ready-v0.2` branch; the packaged executables,
   previews, build output, and self-test reports are ignored and stay local. Binaries become

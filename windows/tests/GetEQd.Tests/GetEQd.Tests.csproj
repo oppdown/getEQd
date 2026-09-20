@@ -30,4 +30,12 @@
           CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
+  <!-- Sourced measurement data is validated through the app's real importer, not a
+       re-implementation of it. -->
+  <ItemGroup>
+    <None Include="..\..\profiles\*.json"
+          Link="profiles\%(Filename)%(Extension)"
+          CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

@@ -4,6 +4,7 @@ using System.Runtime.InteropServices;
 using System.Windows;
 using GetEQd.Diagnostics;
 using GetEQd.Ui;
+using GetEQd.Updates;
 
 namespace GetEQd
 {
@@ -40,6 +41,16 @@ namespace GetEQd
                     return;
                 }
 
+                if (mode == "--check-updates")
+                {
+                    EnableConsoleOutput();
+                    int code = UpdateChecker.Run(e.Args, Console.Out);
+                    Console.Out.Flush();
+                    Environment.ExitCode = code;
+                    Shutdown(code);
+                    return;
+                }
+
                 if (mode == "--help" || mode == "-h" || mode == "/?")
                 {
                     EnableConsoleOutput();
@@ -48,6 +59,7 @@ namespace GetEQd
                     Console.WriteLine("  getEQd.exe                                 open the console");
                     Console.WriteLine("  getEQd.exe --selftest [report.txt]         verify the audio engine");
                     Console.WriteLine("  getEQd.exe --render-preview out.png [...]  render the interface to a PNG");
+                    Console.WriteLine("  getEQd.exe --check-updates                 ask GitHub Releases for a newer build");
                     Console.Out.Flush();
                     Environment.ExitCode = 0;
                     Shutdown(0);

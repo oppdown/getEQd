@@ -17,13 +17,14 @@ One scheme, applied here, in `PROJECT_CONTEXT.md`, and in the public changelog:
 
 | Version | Meaning | State |
 |---------|---------|-------|
-| `v0.1.x` | Public preview line: headphone pass, Profile Lab, listening profiles. | Published. This is what the live site serves. |
-| `v0.2.0` | The measured model lab in this native app. | Built and self-tested locally. Not published. |
+| `v0.1.x` | Public preview line: headphone pass, Profile Lab, listening profiles. | Published on the public site. |
+| `v0.2.0` | The measured model lab in this native app. | Built, self-tested, installed, and published as a GitHub release. Not yet on the public download page. |
 | `v0.3.0` | The system-wide engine. | Not started. |
 
-What exists today is the player and monitor described in this file. What does **not** exist
-yet: a Windows installer, a `Help > Check for Updates` path, and the system-wide mode.
-Anything built but unpublished is described as local, never as shipped.
+What exists today is the player and monitor described in this file, an MSI installer, and an
+update check. What does **not** exist yet: the system-wide mode, and real measured headphone
+data shipped in the app. Anything built but unpublished is described as local, never as
+shipped.
 
 The packaged `.exe` files are **local build output**. They are git-ignored and are not
 repository content; when releases exist they become release assets.
@@ -260,6 +261,46 @@ parts that are easier to reason about in isolation, and it runs in CI.
 
 `.github\workflows\ci.yml` builds the console and runs this suite on `windows-latest`. The
 self-test stays a local gate because a hosted runner has no audio endpoint.
+
+## Updates
+
+The console has no menu bar, so the check lives in the right rail as an **UPDATES** card
+rather than under a `Help` menu: it shows the build version, a **Check for updates** button,
+and a line that always says what happened. Nothing is sent until you press the button.
+
+It reads the latest release from
+`https://api.github.com/repos/oppdown/getEQd/releases/latest`, compares the tag against the
+running build, and offers the installer when a newer one exists. The request has an
+**8 second timeout**, so a dead network ends in the offline state instead of a spinner.
+
+The same check runs headless, which is how each branch was verified:
+
+```
+getEQd.exe --check-updates
+getEQd.exe --check-updates --as-version 0.1.3
+getEQd.exe --check-updates --as-endpoint http://127.0.0.1:8144/403
+```
+
+`--as-version` only changes what the answer is compared against, so the "an update is
+available" branch can be exercised on a machine that is already current. `--as-endpoint`
+points the check at another release feed, so the failure branches can be exercised without
+waiting for GitHub to misbehave. Neither can change what the default endpoint reports.
+
+Every state has its own copy, and every one of them was exercised:
+
+| State | How it was produced | Result |
+|-------|--------------------|--------|
+| Up to date | live, against the published `v0.2.0` release | `This build (0.2.0) is the latest release.` |
+| Update available | live, `--as-version 0.1.3` | `getEQd 0.2.0 is available.` plus the `.msi` download |
+| No releases | live, HTTP 404 | `No published release was found for this build yet.` |
+| Rate limited | live, HTTP 403 and 429 from a stub feed | its own state, not a generic failure |
+| Malformed feed | live, HTTP 200 with a non-release body | `GitHub returned a release this build could not read.` |
+| Failed | live, HTTP 500 | `The update check failed (HTTP 500).` |
+| Offline | live, connection refused | `No connection to GitHub. The console still works offline.` |
+| Timeout | live, unroutable address | `The update check timed out after 8 seconds.` |
+
+The stub feed and the offline cases are not shipped: they were a local HTTP server and a
+dead address used for this verification pass.
 
 ## Building from source
 

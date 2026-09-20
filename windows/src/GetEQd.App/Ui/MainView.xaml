@@ -372,6 +372,25 @@
                       Padding="10,6" FontSize="11.5" Margin="0,9,0,0" HorizontalAlignment="Left" />
             </StackPanel>
           </Border>
+
+          <Border Style="{StaticResource Card}" Margin="0,12,0,0">
+            <StackPanel>
+              <TextBlock Text="UPDATES" Style="{StaticResource Micro}" />
+              <TextBlock x:Name="BuildVersionText" Margin="0,8,0,0" Style="{StaticResource NumericSmall}" />
+              <StackPanel Orientation="Horizontal" Margin="0,9,0,0">
+                <Button x:Name="CheckUpdatesButton" Style="{StaticResource QuietButton}" Content="Check for updates"
+                        Padding="10,6" FontSize="11.5" Click="CheckUpdatesButton_Click"
+                        ToolTip="Ask GitHub Releases whether a newer build exists." />
+                <Button x:Name="OpenReleaseButton" Style="{StaticResource QuietButton}" Content="Open release page"
+                        Padding="10,6" FontSize="11.5" Margin="8,0,0,0" Visibility="Collapsed"
+                        Click="OpenReleaseButton_Click"
+                        ToolTip="Open the release page in your browser." />
+              </StackPanel>
+              <TextBlock x:Name="UpdateStatusText" TextWrapping="Wrap" Margin="0,9,0,0" FontSize="11.5"
+                         Foreground="{StaticResource TextMuted}"
+                         Text="Nothing is sent until you press the button." />
+            </StackPanel>
+          </Border>
         </StackPanel>
       </ScrollViewer>
     </Grid>
