@@ -1,0 +1,15 @@
+<Window x:Class="GetEQd.Ui.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:GetEQd.Ui"
+        Title="getEQd — Make the room move."
+        Width="1340" Height="912"
+        MinWidth="1120" MinHeight="800"
+        Background="{StaticResource BgBase}"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True"
+        TextOptions.TextFormattingMode="Ideal"
+        WindowStartupLocation="CenterScreen">
+
+  <local:MainView x:Name="View" />
+</Window>

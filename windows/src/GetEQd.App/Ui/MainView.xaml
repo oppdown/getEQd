@@ -1,0 +1,451 @@
+<UserControl x:Class="GetEQd.Ui.MainView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:GetEQd.Ui">
+
+  <UserControl.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="pack://application:,,,/getEQd;component/Ui/Theme.xaml" />
+      </ResourceDictionary.MergedDictionaries>
+    </ResourceDictionary>
+  </UserControl.Resources>
+
+  <Grid Background="{StaticResource BgBase}" TextElement.Foreground="{StaticResource TextSecondary}">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="*" />
+      <RowDefinition Height="Auto" />
+    </Grid.RowDefinitions>
+
+    <!-- ==================================================== header -->
+    <Border Grid.Row="0" Background="{StaticResource BgDeep}" BorderBrush="{StaticResource StrokeSoft}"
+            BorderThickness="0,0,0,1" Padding="20,13">
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="Auto" />
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+
+        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+          <TextBlock Text="∿" FontSize="23" Foreground="{StaticResource AccentFill}" VerticalAlignment="Center" />
+          <TextBlock FontSize="17" FontWeight="SemiBold" Foreground="{StaticResource TextPrimary}"
+                     VerticalAlignment="Center" Margin="8,0,0,0">
+            <Run Text="get" /><Run Text="EQ" Foreground="{StaticResource AccentFill}" /><Run Text="d" />
+          </TextBlock>
+          <Border Background="{StaticResource SurfaceRaised}" BorderBrush="{StaticResource StrokeSoft}"
+                  BorderThickness="1" CornerRadius="3" Padding="7,3" Margin="12,0,0,0" VerticalAlignment="Center">
+            <TextBlock Text="WINDOWS CONSOLE" Style="{StaticResource Micro}" />
+          </Border>
+        </StackPanel>
+
+        <StackPanel x:Name="PresetPanel" Grid.Column="1" Orientation="Horizontal"
+                    HorizontalAlignment="Center" VerticalAlignment="Center" />
+
+        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+          <Border Background="{StaticResource Surface}" BorderBrush="{StaticResource StrokeSoft}"
+                  BorderThickness="1" CornerRadius="4" Padding="10,6">
+            <StackPanel Orientation="Horizontal">
+              <Ellipse x:Name="StatusDot" Width="7" Height="7" Fill="{StaticResource GoodFill}"
+                       VerticalAlignment="Center" />
+              <TextBlock x:Name="StatusText" Text="Signal clean" Margin="8,0,0,0" VerticalAlignment="Center" />
+            </StackPanel>
+          </Border>
+          <ToggleButton x:Name="BypassToggle" Style="{StaticResource Segment}" Content="Bypass"
+                        Margin="10,0,0,0" ToolTip="Pass audio through untouched and compare." />
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <!-- ==================================================== body -->
+    <Grid Grid.Row="1" Margin="20,16,20,0">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="*" MinWidth="520" />
+        <ColumnDefinition Width="14" />
+        <ColumnDefinition Width="372" />
+      </Grid.ColumnDefinitions>
+
+      <Grid Grid.Column="0">
+        <Grid.RowDefinitions>
+          <RowDefinition Height="*" MinHeight="228" />
+          <RowDefinition Height="12" />
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="12" />
+          <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- analyzer -->
+        <Border Grid.Row="0" Style="{StaticResource Card}" Padding="0">
+          <Grid>
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="*" />
+              <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <Grid Grid.Row="0" Margin="15,13,15,6">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+              </Grid.ColumnDefinitions>
+
+              <StackPanel Grid.Column="0">
+                <TextBlock Text="LIVE RESPONSE" Style="{StaticResource Micro}" />
+                <TextBlock x:Name="CurveTitle" Text="Move the air. Keep the detail."
+                           Style="{StaticResource CardTitle}" Margin="0,4,0,0" />
+              </StackPanel>
+
+              <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                <StackPanel Width="78">
+                  <TextBlock Text="PEAK BOOST" Style="{StaticResource Micro}" />
+                  <TextBlock x:Name="PeakBoostText" Text="+0.0 dB" Style="{StaticResource Numeric}"
+                             Margin="0,3,0,0" />
+                </StackPanel>
+                <StackPanel Width="78">
+                  <TextBlock Text="AVERAGE" Style="{StaticResource Micro}" />
+                  <TextBlock x:Name="AverageText" Text="0.0 dB" Style="{StaticResource Numeric}"
+                             Margin="0,3,0,0" />
+                </StackPanel>
+                <StackPanel Width="92">
+                  <TextBlock Text="GRAPH AT" Style="{StaticResource Micro}" />
+                  <TextBlock x:Name="GraphRateText" Text="48 kHz" Style="{StaticResource Numeric}"
+                             Margin="0,3,0,0" />
+                </StackPanel>
+              </StackPanel>
+            </Grid>
+
+            <local:CurveView x:Name="Curve" Grid.Row="1" Margin="6,0,6,0" />
+
+            <Grid Grid.Row="2" Margin="15,8,15,13">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+              </Grid.ColumnDefinitions>
+              <TextBlock x:Name="HeadroomText" Grid.Column="0" TextWrapping="Wrap"
+                         Text="No boost above unity." />
+              <TextBlock Grid.Column="1" Style="{StaticResource Micro}" VerticalAlignment="Center"
+                         Margin="16,0,0,0"
+                         Text="DRAG A HANDLE · WHEEL = WIDTH · DOUBLE-CLICK = FLAT" />
+            </Grid>
+          </Grid>
+        </Border>
+
+        <!-- band rack -->
+        <Border Grid.Row="2" Style="{StaticResource Card}">
+          <StackPanel>
+            <Grid>
+              <TextBlock Text="BANDS" Style="{StaticResource Micro}" HorizontalAlignment="Left" />
+              <TextBlock x:Name="BandSummaryText" Style="{StaticResource Micro}" HorizontalAlignment="Right" />
+            </Grid>
+            <UniformGrid x:Name="BandRack" Columns="6" Margin="0,11,0,0" />
+          </StackPanel>
+        </Border>
+
+        <!-- dynamics -->
+        <Border Grid.Row="4" Style="{StaticResource Card}">
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="16" />
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="16" />
+              <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0">
+              <Grid>
+                <TextBlock Text="PREAMP" Style="{StaticResource Micro}" HorizontalAlignment="Left" />
+                <TextBlock x:Name="PreampValue" Text="0.0 dB" Style="{StaticResource Numeric}"
+                           HorizontalAlignment="Right" />
+              </Grid>
+              <Slider x:Name="PreampSlider" Style="{StaticResource StudioSlider}" Minimum="-12" Maximum="11"
+                      SmallChange="0.5" LargeChange="1" TickFrequency="0.5" Value="0" Margin="0,6,0,0"
+                      ToolTip="Trim the whole curve. The ceiling does less work when this is set to the negative of the peak boost." />
+            </StackPanel>
+
+            <StackPanel Grid.Column="2">
+              <Grid>
+                <TextBlock Text="SAFETY CEILING" Style="{StaticResource Micro}" HorizontalAlignment="Left" />
+                <TextBlock x:Name="CeilingValue" Text="-1.0 dB" Style="{StaticResource Numeric}"
+                           HorizontalAlignment="Right" />
+              </Grid>
+              <Slider x:Name="CeilingSlider" Style="{StaticResource StudioSlider}" Minimum="-6" Maximum="0"
+                      SmallChange="0.5" LargeChange="1" TickFrequency="0.5" Value="-1" Margin="0,6,0,0"
+                      ToolTip="Peak ceiling. Peaks above this are pulled down with a 0.4 ms attack." />
+            </StackPanel>
+
+            <StackPanel Grid.Column="4" VerticalAlignment="Center" Margin="8,0,0,0">
+              <TextBlock Text="TRIM TO FIT" Style="{StaticResource Micro}" />
+              <TextBlock x:Name="HeadroomValue" Text="0.0 dB" Style="{StaticResource Numeric}" Margin="0,3,0,0" />
+              <Button x:Name="TrimButton" Style="{StaticResource QuietButton}" Content="Apply trim"
+                      Padding="9,5" Margin="0,7,0,0" FontSize="11"
+                      ToolTip="Set the preamp so material already peaking at full scale lands exactly on the ceiling, which keeps the limiter idle." />
+            </StackPanel>
+          </Grid>
+        </Border>
+      </Grid>
+
+      <!-- ==================================================== right rail -->
+      <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="0,0,4,0">
+
+          <!-- endpoint -->
+          <Border Style="{StaticResource Card}">
+            <StackPanel>
+              <Grid>
+                <TextBlock Text="OUTPUT ENDPOINT" Style="{StaticResource Micro}" HorizontalAlignment="Left" />
+                <Button x:Name="RefreshDevicesButton" Style="{StaticResource QuietButton}" Content="Rescan"
+                        Padding="8,3" FontSize="10.5" HorizontalAlignment="Right" />
+              </Grid>
+              <ListBox x:Name="EndpointList" Style="{StaticResource StudioList}" Margin="0,9,0,0"
+                       MaxHeight="200" />
+              <TextBlock x:Name="EndpointMeta" Style="{StaticResource NumericSmall}" Margin="2,9,0,0"
+                         TextWrapping="Wrap" Text="No endpoint selected." />
+            </StackPanel>
+          </Border>
+
+          <!-- signal path -->
+          <Border Style="{StaticResource Card}" Margin="0,12,0,0">
+            <StackPanel>
+              <TextBlock Text="SIGNAL PATH" Style="{StaticResource Micro}" />
+              <UniformGrid x:Name="RoutePanel" Columns="3" Margin="0,9,0,0" />
+
+              <!-- speaker deck -->
+              <StackPanel x:Name="SpeakerDeck" Margin="0,13,0,0">
+                <CheckBox x:Name="BassToSubCheck" Style="{StaticResource StudioCheckBox}"
+                          Content="Send everything below 80 Hz to one lane"
+                          ToolTip="Mono bass below 80 Hz. On a 5.1 endpoint the mains hand that octave to the LFE channel." />
+                <Grid Margin="0,12,0,0">
+                  <TextBlock Text="SUB LANE" Style="{StaticResource Micro}" HorizontalAlignment="Left" />
+                  <TextBlock x:Name="SubLaneValue" Text="0.0 dB" Style="{StaticResource Numeric}"
+                             HorizontalAlignment="Right" />
+                </Grid>
+                <Slider x:Name="SubLaneSlider" Style="{StaticResource StudioSlider}" Minimum="-6" Maximum="6"
+                        SmallChange="0.5" Value="0" Margin="0,6,0,0" />
+                <Grid Margin="0,10,0,0">
+                  <TextBlock Text="CENTRE LIFT (5.1)" Style="{StaticResource Micro}" HorizontalAlignment="Left" />
+                  <TextBlock x:Name="CenterLiftValue" Text="+1.5 dB" Style="{StaticResource Numeric}"
+                             HorizontalAlignment="Right" />
+                </Grid>
+                <Slider x:Name="CenterLiftSlider" Style="{StaticResource StudioSlider}" Minimum="-3" Maximum="6"
+                        SmallChange="0.5" Value="1.5" Margin="0,6,0,0" />
+                <TextBlock x:Name="SpeakerNote" TextWrapping="Wrap" Margin="0,11,0,0" FontSize="11.5"
+                           Foreground="{StaticResource TextMuted}" />
+              </StackPanel>
+
+              <!-- headphone deck -->
+              <StackPanel x:Name="HeadphoneDeck" Margin="0,13,0,0" Visibility="Collapsed">
+                <TextBlock Text="TARGET" Style="{StaticResource Micro}" />
+                <UniformGrid x:Name="TargetPanel" Columns="2" Margin="0,9,0,0" />
+                <TextBlock x:Name="TargetNote" TextWrapping="Wrap" Margin="0,9,0,0" FontSize="11.5"
+                           Foreground="{StaticResource TextMuted}" />
+                <CheckBox x:Name="TargetTrimCheck" Style="{StaticResource StudioCheckBox}" Margin="0,10,0,0"
+                          Content="Apply the target trim over the faders" />
+
+                <Border Style="{StaticResource Divider}" />
+
+                <TextBlock Text="SOFTWARE HANDOFF" Style="{StaticResource Micro}" />
+                <UniformGrid x:Name="HandoffPanel" Columns="3" Margin="0,9,0,0" />
+                <TextBlock x:Name="HandoffNote" TextWrapping="Wrap" Margin="0,9,0,0" FontSize="11.5"
+                           Foreground="{StaticResource TextMuted}" />
+
+                <Grid Margin="0,13,0,0">
+                  <TextBlock Text="CROSSFEED" Style="{StaticResource Micro}" HorizontalAlignment="Left" />
+                  <TextBlock x:Name="CrossfeedValue" Text="10%" Style="{StaticResource Numeric}"
+                             HorizontalAlignment="Right" />
+                </Grid>
+                <Slider x:Name="CrossfeedSlider" Style="{StaticResource StudioSlider}" Minimum="0" Maximum="35"
+                        SmallChange="1" Value="10" Margin="0,6,0,0" />
+                <Grid Margin="0,10,0,0">
+                  <TextBlock Text="STAGE WIDTH" Style="{StaticResource Micro}" HorizontalAlignment="Left" />
+                  <TextBlock x:Name="StageWidthValue" Text="100%" Style="{StaticResource Numeric}"
+                             HorizontalAlignment="Right" />
+                </Grid>
+                <Slider x:Name="StageWidthSlider" Style="{StaticResource StudioSlider}" Minimum="70" Maximum="130"
+                        SmallChange="1" Value="100" Margin="0,6,0,0" />
+              </StackPanel>
+            </StackPanel>
+          </Border>
+
+          <!-- advanced parametric EQ -->
+          <Border Style="{StaticResource Card}" Margin="0,12,0,0">
+            <StackPanel>
+              <Grid>
+                <TextBlock Text="ADVANCED EQ" Style="{StaticResource Micro}" HorizontalAlignment="Left" />
+                <ToggleButton x:Name="AdvancedToggleButton" Style="{StaticResource Segment}" Content="Open editor"
+                              Padding="9,4" FontSize="11" HorizontalAlignment="Right"
+                              ToolTip="Show adjustable frequency, filter type, gain and Q for all ten slots." />
+              </Grid>
+              <TextBlock x:Name="AdvancedStatusText" TextWrapping="Wrap" Margin="0,9,0,0"
+                         FontSize="11.5" Foreground="{StaticResource TextMuted}"
+                         Text="Six quick bands are active. Open the editor for four extra parametric slots." />
+              <StackPanel x:Name="AdvancedFilterList" Margin="0,11,0,0" Visibility="Collapsed" />
+            </StackPanel>
+          </Border>
+
+          <!-- measured model lab -->
+          <Border Style="{StaticResource Card}" Margin="0,12,0,0">
+            <StackPanel>
+              <Grid>
+                <TextBlock Text="MEASURED MODEL LAB" Style="{StaticResource Micro}" HorizontalAlignment="Left" />
+                <TextBlock x:Name="LabModeText" Text="NO MODEL SELECTED" Style="{StaticResource Micro}" HorizontalAlignment="Right" />
+              </Grid>
+              <TextBlock x:Name="LabProfileMetaText" Text="Choose an imported measurement to inspect its provenance and correction." TextWrapping="Wrap"
+                         Margin="0,8,0,0" FontSize="11.5" Foreground="{StaticResource TextMuted}" />
+              <local:ResponseLabView x:Name="ResponseLab" Height="176" Margin="0,10,0,0" />
+              <Grid Margin="0,9,0,0">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                  <TextBlock Text="RAW PEAK" Style="{StaticResource Micro}" />
+                  <TextBlock x:Name="LabRawPeakText" Text="—" Style="{StaticResource Numeric}" Margin="0,3,0,0" />
+                </StackPanel>
+                <StackPanel Grid.Column="1">
+                  <TextBlock Text="CORRECTION PEAK" Style="{StaticResource Micro}" />
+                  <TextBlock x:Name="LabCorrectionPeakText" Text="—" Style="{StaticResource Numeric}" Margin="0,3,0,0" />
+                </StackPanel>
+                <StackPanel Grid.Column="2">
+                  <TextBlock Text="SAFE PREAMP" Style="{StaticResource Micro}" />
+                  <TextBlock x:Name="LabPreampText" Text="—" Style="{StaticResource Numeric}" Margin="0,3,0,0" />
+                </StackPanel>
+              </Grid>
+              <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                <Button x:Name="ApplyCorrectionButton" Style="{StaticResource PrimaryButton}" Content="Apply correction"
+                        Padding="10,6" FontSize="11.5" IsEnabled="False"
+                        ToolTip="Place the measured correction on the six quick bands and set safe headroom." />
+                <Button x:Name="ExportAuditButton" Style="{StaticResource QuietButton}" Content="Export audit"
+                        Padding="10,6" FontSize="11.5" Margin="8,0,0,0" IsEnabled="False"
+                        ToolTip="Write the raw curve, target, correction, metadata and quick-band landing to a JSON audit file." />
+              </StackPanel>
+              <TextBlock x:Name="LabStatusText" Text="The imported source remains unchanged." TextWrapping="Wrap"
+                         Margin="0,9,0,0" FontSize="11.5" Foreground="{StaticResource TextMuted}" />
+              <TextBlock x:Name="LabAuditText" Text="No audit selected." TextWrapping="Wrap"
+                         Margin="0,6,0,0" FontSize="10.5" Foreground="{StaticResource TextMuted}" />
+            </StackPanel>
+          </Border>
+
+          <!-- profiles -->
+          <Border Style="{StaticResource Card}" Margin="0,12,0,0">
+            <StackPanel>
+              <TextBlock Text="SAVE THIS SOUND" Style="{StaticResource Micro}" />
+              <Grid Margin="0,9,0,0">
+                <TextBox x:Name="ProfileNameBox" Style="{StaticResource StudioTextBox}" MaxLength="48" />
+                <TextBlock x:Name="ProfileNamePlaceholder" Text="Name this listening profile"
+                           Foreground="{StaticResource TextMuted}" IsHitTestVisible="False"
+                           Margin="11,0,0,0" VerticalAlignment="Center" />
+              </Grid>
+              <Button x:Name="SaveProfileButton" Style="{StaticResource PrimaryButton}" Content="Save profile"
+                      Margin="0,9,0,0" />
+              <TextBlock x:Name="SaveStatusText" TextWrapping="Wrap" Margin="0,9,0,0" FontSize="11.5"
+                         Foreground="{StaticResource TextMuted}"
+                         Text="Changes are live until you save them." />
+
+              <Border Style="{StaticResource Divider}" />
+              <TextBlock Text="YOUR PROFILES" Style="{StaticResource Micro}" />
+              <StackPanel x:Name="SavedProfileList" Margin="0,9,0,0" />
+
+              <Border Style="{StaticResource Divider}" />
+              <TextBlock Text="MEASURED PROFILES" Style="{StaticResource Micro}" />
+              <StackPanel Orientation="Horizontal" Margin="0,9,0,0">
+                <Button x:Name="ImportButton" Style="{StaticResource QuietButton}" Content="Import JSON"
+                        Padding="10,6" FontSize="11.5" />
+                <Button x:Name="TemplateButton" Style="{StaticResource QuietButton}" Content="Template"
+                        Padding="10,6" FontSize="11.5" Margin="8,0,0,0" />
+              </StackPanel>
+              <TextBlock x:Name="ImportStatusText" TextWrapping="Wrap" Margin="0,9,0,0" FontSize="11.5"
+                         Foreground="{StaticResource TextMuted}"
+                         Text="Nothing measured loaded yet. Imports stay on this machine." />
+              <StackPanel x:Name="MeasurementList" Margin="0,9,0,0" />
+            </StackPanel>
+          </Border>
+
+          <Border Style="{StaticResource Card}" Margin="0,12,0,0">
+            <StackPanel>
+              <TextBlock Text="STORAGE" Style="{StaticResource Micro}" />
+              <TextBlock x:Name="StoragePathText" TextWrapping="Wrap" Margin="0,8,0,0"
+                         Style="{StaticResource NumericSmall}" />
+              <Button x:Name="OpenFolderButton" Style="{StaticResource QuietButton}" Content="Open folder"
+                      Padding="10,6" FontSize="11.5" Margin="0,9,0,0" HorizontalAlignment="Left" />
+            </StackPanel>
+          </Border>
+        </StackPanel>
+      </ScrollViewer>
+    </Grid>
+
+    <!-- ==================================================== transport -->
+    <Border Grid.Row="2" Background="{StaticResource BgDeep}" BorderBrush="{StaticResource StrokeSoft}"
+            BorderThickness="0,1,0,0" Padding="20,11,20,9" Margin="0,16,0,0">
+      <Grid>
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+          </Grid.ColumnDefinitions>
+
+          <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+            <Button x:Name="OpenFileButton" Style="{StaticResource PrimaryButton}" Content="Open audio file…" />
+            <StackPanel Orientation="Horizontal" Margin="12,0,0,0" VerticalAlignment="Center">
+              <ToggleButton x:Name="ProbePinkToggle" Style="{StaticResource Segment}" Content="Pink noise"
+                            ToolTip="Play pink noise through the chain. Useful for hearing a band without any file." />
+              <ToggleButton x:Name="ProbeToneToggle" Style="{StaticResource Segment}" Content="1 kHz"
+                            Margin="6,0,0,0" />
+              <ToggleButton x:Name="ProbeSweepToggle" Style="{StaticResource Segment}" Content="Sweep"
+                            Margin="6,0,0,0" ToolTip="Six-second sweep from 20 Hz to 20 kHz." />
+            </StackPanel>
+          </StackPanel>
+
+          <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="14,0,0,0">
+            <Button x:Name="PlayButton" Style="{StaticResource IconButton}" Content="▶"
+                    ToolTip="Play or pause (Space)" />
+            <Button x:Name="StopButton" Style="{StaticResource IconButton}" Content="■" Margin="6,0,0,0"
+                    ToolTip="Stop" />
+            <CheckBox x:Name="LoopCheck" Style="{StaticResource StudioCheckBox}" Content="Loop"
+                      Margin="12,0,0,0" VerticalAlignment="Center" />
+          </StackPanel>
+
+          <Grid Grid.Column="2" Margin="18,0,18,0" VerticalAlignment="Center">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Slider x:Name="PositionSlider" Grid.Column="0" Style="{StaticResource StudioSlider}"
+                    Minimum="0" Maximum="1" Value="0" />
+            <TextBlock x:Name="PositionText" Grid.Column="1" Style="{StaticResource NumericSmall}"
+                       Margin="12,0,0,0" VerticalAlignment="Center" Text="0:00 / 0:00" />
+          </Grid>
+
+          <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
+            <StackPanel Width="104" VerticalAlignment="Center" Margin="0,0,10,0">
+              <TextBlock x:Name="PeakReadoutText" Style="{StaticResource NumericSmall}" Text="L — R —" />
+              <TextBlock x:Name="ReductionReadoutText" Style="{StaticResource NumericSmall}" Margin="0,3,0,0"
+                         Text="CEILING 0.0 dB" />
+            </StackPanel>
+            <local:MeterBar x:Name="Meter" Width="188" Height="30" />
+          </StackPanel>
+        </Grid>
+
+        <Grid Grid.Row="1" Margin="0,10,0,0">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+          </Grid.ColumnDefinitions>
+          <TextBlock x:Name="SourceText" Grid.Column="0" Style="{StaticResource Micro}"
+                     FontWeight="Normal" Text="NO SOURCE LOADED" />
+          <TextBlock x:Name="DetailText" Grid.Column="1" Style="{StaticResource Micro}"
+                     FontWeight="Normal" Text="READY" HorizontalAlignment="Right" />
+        </Grid>
+      </Grid>
+    </Border>
+  </Grid>
+</UserControl>

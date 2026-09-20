@@ -1,0 +1,26 @@
+# Local .NET SDK used for building the Windows app. Machine-specific, ~300 MB.
+.tools/
+
+# Build output, caches, and per-user IDE state.
+bin/
+obj/
+*.user
+*.suo
+.vs/
+
+# Self-test report files written next to the executable.
+windows/geteqd*-selftest.txt
+
+# Packaged app copies and rendered previews. Binaries are release assets, never
+# repository content; the 296 MB of loose Git objects this repository once carried
+# were staged executables that were never committed.
+windows/dist/
+windows/dist-advanced/
+windows/dist-measured/
+windows/preview/
+*.exe
+*.pdb
+
+# OS noise.
+Thumbs.db
+Desktop.ini
