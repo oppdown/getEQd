@@ -302,6 +302,59 @@ Every state has its own copy, and every one of them was exercised:
 The stub feed and the offline cases are not shipped: they were a local HTTP server and a
 dead address used for this verification pass.
 
+## System-wide mode (in progress)
+
+The decided route for `v0.3.0` is that getEQd does not filter other applications' audio
+itself. It writes Equalizer APO configuration and APO does the filtering, so this costs
+nothing and needs no driver signing. `docs\equalizer-apo-integration.md` is the
+implementation spec; `Systemwide\ApoConfig.cs` is the first piece of it.
+
+```powershell
+getEQd.exe --apo-config                             # print the configuration for this build
+getEQd.exe --apo-config --preset impact --out config.txt
+getEQd.exe --apo-config --sample-rate 32000         # what a 32 kHz device would get
+```
+
+Two decisions in the emitted text are worth knowing about:
+
+- **Shelves are written as `LSC`/`HSC` with a dB-per-octave slope, never as `LS`/`HS` with a
+  `Q`.** getEQd designs its shelves with the RBJ slope parameter. The `C` forms use the
+  frequency directly as the center frequency and take that same slope; the plain forms apply
+  a DCX2496 corner-frequency correction and would give a different response. Default shelf
+  Q 0.70 becomes `10.2 dB` per octave.
+- **The file carries the headroom-safe preamp, not the console's preamp fader.** That is the
+  same number the "Trim to fit" readout shows. Press **Apply trim** and the two agree.
+
+Verified so far:
+
+| Check | Evidence |
+|-------|----------|
+| The emitted text is the documented grammar | the Impact preset produces the exact block recorded in the spec, character for character |
+| The config reproduces the drawn curve | a test reads the emitted text back as biquads and compares the summed response against `CurveSnapshot.CurveDbAt` across eight frequencies |
+| Shelf mapping | Q 0.20 → 7.2, 0.50 → 9.0, 0.70 → 10.2, 1.00 → 12.0 dB per octave |
+| Disabled slots | omitted, with the remaining filters renumbered from 1 |
+| Frequency clamping | a 16 kHz slot on a 32 kHz device emits the clamped 14400 Hz |
+| The include line is idempotent | writing twice leaves exactly one `Include: geteqd.txt`, and the user's own lines survive |
+| Uninstall path | removing takes the managed file and its include line back out |
+| APO detection | reads `HKLM\SOFTWARE\EqualizerAPO` read-only and reports "not installed" honestly when it is absent |
+
+Not done yet, and why:
+
+- **The console has no switch for it.** The rail card and the mode toggle are the next piece.
+- **The player must stop filtering its own audio in this mode.** getEQd plays through WASAPI
+  shared mode, so its output already passes through APO. If both apply the curve, every
+  sample is EQ'd twice. The spec makes bypassing the player's chain the default; that is a
+  change to the audio path and deserves its own pass.
+- **Routing and bass management are not carried over.** The file writes the EQ and preamp
+  only, applying to every channel. The 80 Hz split, centre derivation, and crossfeed have no
+  equivalent in a simple include.
+- **It has never been applied by a real Equalizer APO.** APO is not installed on this
+  machine, so the config text is verified but its effect on real audio is not. That needs
+  Equalizer APO installed, which is an elevated install and a reboot.
+
+Requires a current 1.x Equalizer APO: the `LSC`/`HSC` slope form is what the mapping depends
+on, and older installs parse shelves differently.
+
 ## Building from source
 
 Requires the .NET 8 SDK. On this machine it is installed locally at `.tools\dotnet`

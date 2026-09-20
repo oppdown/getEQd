@@ -3,6 +3,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows;
 using GetEQd.Diagnostics;
+using GetEQd.Systemwide;
 using GetEQd.Ui;
 using GetEQd.Updates;
 
@@ -51,6 +52,16 @@ namespace GetEQd
                     return;
                 }
 
+                if (mode == "--apo-config")
+                {
+                    EnableConsoleOutput();
+                    int code = ApoConfig.Run(e.Args, Console.Out);
+                    Console.Out.Flush();
+                    Environment.ExitCode = code;
+                    Shutdown(code);
+                    return;
+                }
+
                 if (mode == "--help" || mode == "-h" || mode == "/?")
                 {
                     EnableConsoleOutput();
@@ -60,6 +71,7 @@ namespace GetEQd
                     Console.WriteLine("  getEQd.exe --selftest [report.txt]         verify the audio engine");
                     Console.WriteLine("  getEQd.exe --render-preview out.png [...]  render the interface to a PNG");
                     Console.WriteLine("  getEQd.exe --check-updates                 ask GitHub Releases for a newer build");
+                    Console.WriteLine("  getEQd.exe --apo-config [--preset id]      print the Equalizer APO configuration");
                     Console.Out.Flush();
                     Environment.ExitCode = 0;
                     Shutdown(0);

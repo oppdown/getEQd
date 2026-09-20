@@ -60,10 +60,13 @@ it has not been started.
    correction arrays plus the six-band landing. It has not been exercised against a real
    third-party measurement in this repo.
 3. **Take the native engine system-wide, preserving output-path and channel intent.**
-   `Open — active, no driver assigned`. The real-time DSP and channel routing already exist
-   in `windows\`. What is missing is intercepting other applications, which needs a
-   kernel-mode APO or virtual audio driver plus code signing. This is the largest item on
-   the list and the one that needs a decision before work starts. Not parked.
+   `In progress — started 2026-09-20`. The route is decided: getEQd generates Equalizer APO
+   configuration and APO stays the filter engine, so nothing needs driver signing. The
+   configuration generator is built and verified (`Systemwide\ApoConfig.cs`, `--apo-config`),
+   including a test proving the emitted text reproduces the drawn curve. Still to do: the
+   console switch for the mode, bypassing the player's own chain so audio is not EQ'd twice,
+   carrying routing and bass management, and wiring the config removal into uninstall. None
+   of it has been applied by a real Equalizer APO, because APO is not installed here.
 4. **Add microphone room calibration, per-channel delay, phase/polarity, and a safe
    limiter.** `Open` — send a "limiter" already exists in the console; this item means the
    measurement-driven version.
